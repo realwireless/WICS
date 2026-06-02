@@ -1,0 +1,35 @@
+---------------------------------------------------
+        UPLOAD WICS CONFIGURATION FILES
+---------------------------------------------------
+Example and documentation of the configuration files
+is stored in each WICS_[Board] folder in a text-file
+
+Edit the configuration file so the running part
+is suiting your needs from a text editor.
+You can keep or delete the #documentation rows
+---------------------------------------------------
+Upload via USB cable:
+1. Disconnect the input Power if connected. 
+2. Connect the Microcontroller to your Computer
+   using a "real" USB-C cable.  
+3. Open your Browser and go to: 
+   https://thelastoutpostworkshop.github.io/ESPConnect/
+4. Click the Blue Button "Connect" and select COM port
+   Click Connect
+5. From the left menu, select LittleFS Tools
+6. Click "Backup"
+7. Drag and drop the configuration file to the area
+8. Click save to Flash
+--------------------------------------------------- 
+Upload via HTTP (WEB)
+1. The Microcontroller must be powered ON
+2. Connect to the Boards Network (Access Point)
+   The name is either your selected name in wifi.txt
+   or the default ESP32_[MAC-address]
+   Default password is: wics2026
+3. When connected open your web browser and type
+   http://192.168.4.1
+4. Now you can select the file on your computer
+   and upload. Existing file will be replaced.
+--------------------------------------------------- 
+  

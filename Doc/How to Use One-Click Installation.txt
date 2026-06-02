@@ -1,0 +1,16 @@
+--------------------------------------------------------
+WICS One-Click Installation of nowRail and WICS Software
+--------------------------------------------------------
+1. If upgrading, make a copy of your configuration files
+2. Disconnect the Board
+3. Press and hold the right Boot button while connecting the USB-C cable
+   The Microcontroller starts in a "Flash mode"
+4. Open your WEB Browser and go to: https://realwireless.github.io/WICS-Install/
+5. Select your "WICS Board" from the list of Boards
+6. Click "Connect"
+7. Follow the instructions on the Screen
+8. When Done, Restart the Microcontroller (Left Button)
+9. Upload your configuration file
+10.If needed - Restart again
+--------------------------------------------------------
+You can use ESP Connect or WIFI to upload configuration
