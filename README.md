@@ -12,4 +12,4 @@ To downlaod nowRail and WICS C/C++ code for different WICS Boards:
 6. Open nowRail.ino from the Arduino IDE.
 
 Description with sample configuration file (.txt) is located in each WICS_[Board] folder.       
-To access For WICS PCB Files please go to WICS hardware
+To access For WICS PCB Files please go to https://github.com/realwireless/WICS-Hardware
