@@ -1,5 +1,5 @@
 # WICS
-WICS Wireless Control System  Hard- and Software. Addon to nowRail.
+WICS Wireless Control System  Hard- and Software. Add-On to nowRail.
  
 For One-Click Instalation of nowRail and Wics software please go to: https://realwireless.github.io/WICS-Install/
 -----------------------------------------------------------------------------------------------------------------
