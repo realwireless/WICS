@@ -1,7 +1,7 @@
 # WICS
 WICS Wireless Control System  Hard- and Software. Add-On to nowRail.
  
-For One-Click Instalation of nowRail and Wics software please go to: https://realwireless.github.io/WICS-Install/
+For One-Click Installation of nowRail and Wics software please go to: https://realwireless.github.io/WICS-Install/
 -----------------------------------------------------------------------------------------------------------------
 To downlaod nowRail and WICS C/C++ code for different WICS Boards:
 1. Create the folder \nowRail in your Arduino sketch folder
