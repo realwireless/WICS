@@ -1,0 +1,155 @@
+# =========================================================================================================================
+#                                       WICS GATEWAY CONFIGURATION FILE v1.01                     (2026-05-28 Bo Holmqvist)
+# =========================================================================================================================
+# [Type]: BUTTONS, A-BUTTON, B-BUTTON, C-BUTTON, D-BUTTON, CHANNEL 
+# [Type]: DELAYEDACC, TIMEACC, TIMEDACC 
+# -------------------------------------------------------------------------------------------------------------------------
+# BUTTONS format:                                                                                       (Button PIN output)
+# 1. [Type] 		BUTTONS      (RX480E Settings)
+# 2. [Button A-value]	Value:18-21  (Default value 21, but can be 20 or other)
+# 3. [Button B-value]   Value:18-21  (Default value 20, but can be 18 or other)
+# 4. [Button C-value]   Value:18-21  (Default value 19  most often 19 or other)
+# 5. [Button D-value]   Value:18-21  (Default value 18, but can be 21 or other)
+#
+# BUTTONS example:
+#         A  B  C  D 
+# BUTTONS,20,18,19,21  # Alternate settings from one vendor of RX480E 
+#
+# -------------------------------------------------------------------------------------------------------------------------
+# A-BUTTON format:                                                            (Set the System clock to specific time & day)
+# [type],[Hour],[Minutes],[Second],[Day]
+#
+# 1. [Type]	A-BUTTON  
+# 2. [Hour]     Value 0-23
+# 3. [Minute]   Value 0-59
+# 4. [Second]   Value 0-59
+# 5. [Day]      Value 0-6  
+#
+# A-BUTTON example:
+#      1   2  3  4  5
+# A-BUTTON,10,30,15,2  Set the System Clock to 10:30:15 on Day 2.  
+#
+# -------------------------------------------------------------------------------------------------------------------------
+# B-BUTTON format:                                                      (Alternating the clock speed between (0-255) and 1)
+# [Type],[Speed]
+#
+# 1. [Type]	B-BUTTON
+# 2. [Speed]	Value 0-255. 0=Turn off, 1=Real time, 2-255 multiply speed. 
+#
+# B-BUTTON example:
+#     1     2  
+# B-BUTTON, 10    Set the clock speed to 10X on the first press on B. Second press clock speed=1
+#
+# -------------------------------------------------------------------------------------------------------------------------
+# C-BUTTON format:                                                                         (Set the clock speed to 0-255 X)
+# [Type],[Speed]
+#
+# 1. [Type]	C-BUTTON 
+# 2. [Speed]	Value 0-255. 0=Turn off, 1=Real time, 2-255 multiply speed. Connected to [Button C] 
+#
+# C-BUTTON example:
+#    1      2 
+# B-BUTTON, 2      Set the clock speed to 2X 
+#
+# -------------------------------------------------------------------------------------------------------------------------
+# D-BUTTON format: (Max: 8-Click + restart Click #9)                            (Assign # of Button-D Click -> DCC command)                  
+# [Type],[Clicks],[DCC],[Logic],[Active]
+#
+# 1. [Type]     D-BUTTON 
+# 2. [Clicks]   Number of click on the D-Button after activating (1-9) 9=Restart the Microcontroller) 
+# 3. [DCC] 	DCC address that will be sent out (1-9999).
+# 4. [Logic]    DCC logic that will be sent out (0/1) 
+# 5. [Active]   0/1 - If 0 Ignore the row
+#
+# D-BUTTON example (Don't use the [] only the value):
+#      1      2    3    4   5
+# [D-BUTTON],[2],[100],[1],[1]  # When 2-click on the D-Button DCC:100,Logic:1 will be sent out        
+#
+# -------------------------------------------------------------------------------------------------------------------------
+# CHANNEL format: (Only channel 1,6 and 11)                                     (Assign DCC-command to change WIFI channel)                  
+# [Type],[DCC],[Logic],[Channel,[Active]
+#
+# 1. [Type]     CHANNEL 
+# 2. [DCC] 	DCC address that will be sent out (1-9999).
+# 3. [Logic]    DCC logic that will be sent out (0/1) 
+# 4. [Channel]  WIFI-Channel number (1,6,11)  
+# 5. [Active]   0/1 - If 0 Ignore the row
+#
+# CHANNEL example (Don't use the [] only the value):
+#      1      2     3   4    5
+# [CHANNEL],[8011],[1],[11],[1]  # When DCC=8011, Logic:1 Set WIFI channel to:11, Active        
+#
+# -------------------------------------------------------------------------------------------------------------------------
+# DELAYEDACC format: (Max:20 DELAYEDACC)                                                  (Delayed sequence of DCC command)                                           
+# [Type],[DCC],[Logic],[AccDCC],[AccLogic],[Delay]
+#
+# 1. [Type]	DELAYEDACC
+# 2. [DCC]	DCC address that activating the function (1-9999)
+# 3. [Logic]    0/1 
+# 4. [AccDCC]   DCC address to activate (1-9999) 
+# 5. [AccLogic] 0/1 
+# 6. [Delay]    Delayed in milliseconds before activating (0-60000)
+#
+# DELAYEDACC example (Don't use the [] only the value):  
+#       1        2    3    4     5   6  
+# [DELAYEDACC],[200],[1],[2000],[1],[20]    When DCC=20 Logic:1, Send DCC:2000 Logic 1 is called after 20ms
+# [DELAYEDACC],[200],[1],[3000],[1],[2000]  When DCC=20 Logic:1, Send DCC:3000 Logic 1 is called after 2 seconds
+# [DELAYEDACC],[200],[1],[3000],[0],[5000]  When DCC=20 Logic:0, Send DCC:3000 Logic 0 is called after 5 seconds
+#
+# -------------------------------------------------------------------------------------------------------------------------
+# TIMEDACC format: (Max:20 TIMEDACC) (*=any, */x=interval)                                           (Schedule DCC command)
+# [Type],[Hour],[Minutes],[Second],[Day],[DCC],[Logic],[Active]
+#
+# 1. [Type]    TIMEACC  
+# 2. [Hour]     Value 0-23, * or */x (e.g., */2 for every 2 hours)
+# 3. [Minute]   Value 0-59, * or */x (e.g., */5 for every 5 minutes)
+# 4. [Second]   Value 0-59, * or */x (e.g., */10 for every 10 seconds)
+# 5. [Day]      Value 0-6,  * or */x (e.g., */2 for every second day. Day= 0,2,4,6   
+# 6. [DCC]      DCC address that will be sent out (1-9999)
+# 7. [Logic]    0/1
+# 8. [Active]   0/1 - If 0 Ignore the row
+#
+# TIMEACC example (Don't use the [] only the value). Be careful, easy to make mistakes!
+#    1       2   3    4    5   6    7   8
+# [TIMEACC],[*],[*/5],[0],[*],[15],[1],[1] Every 5 minutes at second 0, All Days send DCC-Address:15 Logic:1. Row is active 
+#
+# -------------------------------------------------------------------------------------------------------------------------
+# TIMEDEX format: (Max:20 TIMEDEX) (*=any, */x=interval)                                          (Schedule DCC-EX command)
+# [Type],[Hour],[Minutes],[Second],[Day],[DCC],[Command],[Active]
+#
+# 1. [Type]    TIMEDEX  
+# 2. [Hour]     Value 0-23, * or */x
+# 3. [Minute]   Value 0-59, * or */x
+# 4. [Second]   Value 0-59, * or */x
+# 5. [Day]      Value 0-6,  * or */x
+# 6. [Command]  DCC-EX Command 
+# 7. [Active]   0/1 - If 0 Ignore the row
+# 
+# TIMEDEX example (Don't use the [] only the value). Be careful, easy to make mistakes!
+#    1       2   3    4     5    6    7 
+# [TIMEDEX],[*],[*],[*/10],[2],[<Q>],[1] Every 10 seconds, on Day:2 send the command:<Q> to DCC-EX Command Station.
+#
+# =========================================================================================================================
+#                                      ### YOUR ACTUAL RUNNING CONFIGURATION BELOW ###
+# =========================================================================================================================
+# BUTTONS,20,18,19,21       # Alternate RX480E settings. Comment (#) this row will set 21,20,19,18 (default settings) 
+
+A-BUTTON,6,0,0,1            # Set the System Clock to 06:00 Day:1 if "Button A" is pressed
+B-BUTTON,2                  # Double the  System Clock speed first time "Button B" is pressed, Second press back to 1
+C-BUTTON,10                 # Change the System Clock speed 10 times if "Button C" is pressed.
+
+D-BUTTON,1,100,1,1          # 1 Click On D-Button sends out DCC:100 Logic:1. Row is Active
+D-BUTTON,2,100,0,1          # 2 Click On D-Button sends out DCC:100 Logic:0. Row is Active
+D-BUTTON,3,801,1,1          # 3 Click On D-Button sends out DCC:801 Logic:1. Row is Active
+D-BUTTON,4,806,1,1          # 4 Click On D-Button sends out DCC:806 Logic:1. Row is Active
+D-BUTTON,5,811,0,1          # 5 Click On D-Button sends out DCC:811 Logic:1. Row is Active
+
+TIMEACC,*,*/1,0,*,101,1,0   # Every minute (at second 0), all days send DCC-Address:101 Logic:1 Row is inactive!
+TIMEACC,*,*,*/30,*,101,0,0  # Every 30 seconds (at second 0 and 30), all days send DCC-Address:101 Logic:0 Row is inactive!
+
+TIMEDEX,*/1,0,0,*,<Z>,0     # Every hour (at minute 0, second 0), all days send <Z>. Row is inactive!
+TIMEDEX,6,0,0,*/2,<Q>,0     # At 06:00:00, every second day send <Q>. Row is inactive!
+
+CHANNEL,801,1,1,1           # DCC-Address:8001,logic 1 sets the WIFI channel to 1. Row is active
+CHANNEL,806,1,6,1           # DCC-Address:8006,logic 1 sets the WIFI channel to 6. Row is active
+CHANNEL,811,1,11,1          # DCC-Address:8011,logic 1 sets the WIFI channel to 1. Row is active

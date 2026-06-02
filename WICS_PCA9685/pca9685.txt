@@ -1,0 +1,65 @@
+# ================================================================================================
+#                          WICS PCA9685 CONFIGURATION FILE v1.01         (2026-05-30 Bo Holmqvist)
+# ================================================================================================
+# [type] is either LED or SERVO
+# Max 4 PCA9685 modules can be Daisy-Chained after each other per WICS Board. Individual addresses.  
+# ------------------------------------------------------------------------------------------------
+#
+# LED Format:
+# [type],[address],[port],[dcc],[logic],[Effect],[Max_bright],[Effect_bright],[enabled]
+#
+# LED parameters:
+# 1. [type]          LED (You can't mix type on a PCA9685 Board. The Board is either LED or SERVO).  
+# 2. [Address]       PCA9685 Module address 40-43 (Hex address).
+# 3. [Port]          PCA9685 port numer 0-15
+# 4. [DCC]           The DCC Address to the port (1-9999) DCC systems can have a limit 1-2000. 
+# 5. [Logic]         Is 0 or 1 turning on the LED. (0/1).
+# 6. [Effect]        0=standard on/off, 1=Fire flicker, 2=Gas light, 3=Arc welder, 4=Flashing (0-4).
+# 7. [Max_bright]    Maximum brightness of the LED (0-4095).
+# 8. [Effect_bright] Lowest brightness of the LED (0-4095).
+# 9. [Enabled]       PCA9685 port 1=Active, 0=Disabled (Ignored). (0/1).
+#
+# LED Example:
+#  1  2  3  4  5 6  7   8 9 
+# LED,40,0,100,1,0,4095,0,1
+# Adress 0x40, Port-0, DCC-address=100, 1=Turn On, No Effect, Max brightness, Minimum Brightness, Active   
+# ------------------------------------------------------------------------------------------------
+#
+# SERVO Format:
+# [type],[address],[port],[dcc],[Angel-0],[Angel-1],[Move-Speed],[enabled]
+#
+# SERVO parameters:
+# 1. [type]          SERVO (You can't mix type on a PCA9685 Board. The Board is either LED or SERVO). 
+# 2. [Address]       PCA9685 Module address 40-43 (Hex address). 
+# 3. [Port]          PCA9685 port numer 0-15.
+# 4. [DCC]           The DCC Address to the port (1-9999) DCC systems can have a limit 1-2000. 
+# 5. [Angel-0]       How many degrees the servo should turn when logic=0. (Min=450, Max=2000).     	
+# 6. [Angle-1]       How many degrees the servo should turn when logic=1  (Min=450, Max=2000).
+# 7. [Move-speed]    How fast/slow in milliseconds the servo should turn. (1-60 000) 
+# 8. [Enabled]       PCA9685 port 1=Active, 0=Disabled (Ignored). (0/1).
+#
+# SERVO Example:
+#   1   2  3  4   5   6    7  8 
+# SERVO,41,0,200,500,1500,500,1
+# Address 0x41, Port-0, DCC-Address=200, move 500 when 0, move 1500 when 1, speed 500ms , Active 
+#
+# ================================================================================================
+#                                  MY ACTUAL RUNNING CONFIGURATION
+# ================================================================================================
+# PCA9685 Module-1 0x40 LED. DCC address 100-115
+LED,40,0,100,1,0,4095,0,1 
+LED,40,1,101,1,0,4095,0,1
+LED,40,2,102,1,0,4095,0,1
+LED,40,3,103,1,0,4095,0,1
+LED,40,4,104,1,0,4095,0,1
+LED,40,5,105,1,0,4095,0,1
+LED,40,6,106,1,0,4095,0,1
+LED,40,7,107,1,0,4095,0,1
+LED,40,8,108,1,0,4095,0,1
+LED,40,9,109,1,0,4095,0,1
+LED,40,10,110,1,0,4095,0,1
+LED,40,11,111,1,0,4095,0,1
+LED,40,12,112,1,0,4095,0,1
+LED,40,13,113,1,0,4095,0,1
+LED,40,14,114,1,4,4095,0,1 #Railroad Crossing signal Left Red. Flashing delay is set to  
+LED,40,15,114,1,4,0,4095,1 #Railroad Crossing signal Right Red
