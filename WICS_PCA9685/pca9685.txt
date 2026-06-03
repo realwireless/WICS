@@ -54,12 +54,12 @@ LED,40,3,103,1,0,4095,0,1
 LED,40,4,104,1,0,4095,0,1
 LED,40,5,105,1,0,4095,0,1
 LED,40,6,106,1,0,4095,0,1
-LED,40,7,107,1,0,4095,0,1
-LED,40,8,108,1,0,4095,0,1
+LED,40,7,107,1,4,4095,0,1 #Railroad Crossing signal Left Red. Flashing delay is set to  
+LED,40,8,107,1,4,0,4095,1 #Railroad Crossing signal Right Red
 LED,40,9,109,1,0,4095,0,1
 LED,40,10,110,1,0,4095,0,1
 LED,40,11,111,1,0,4095,0,1
 LED,40,12,112,1,0,4095,0,1
 LED,40,13,113,1,0,4095,0,1
-LED,40,14,114,1,4,4095,0,1 #Railroad Crossing signal Left Red. Flashing delay is set to  
-LED,40,15,114,1,4,0,4095,1 #Railroad Crossing signal Right Red
+LED,40,14,114,1,0,4095,0,1
+LED,40,15,115,1,0,4095,0,1
