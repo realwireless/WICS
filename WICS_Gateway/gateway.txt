@@ -138,16 +138,17 @@ A-BUTTON,6,0,0,1            # Set the System Clock to 06:00 Day:1 if "Button A" 
 B-BUTTON,2                  # Double the  System Clock speed first time "Button B" is pressed, Second press back to 1
 C-BUTTON,10                 # Change the System Clock speed 10 times if "Button C" is pressed.
 
-D-BUTTON,1,101,1,1          # 1 Click On D-Button sends out DCC:101 Logic:1. Row is Active
-D-BUTTON,2,101,0,1          # 2 Click On D-Button sends out DCC:101 Logic:0. Row is Active
+D-BUTTON,1,109,1,1          # 1 Click On D-Button sends out DCC:109 Logic:1. Row is Active
+D-BUTTON,2,109,0,1          # 2 Click On D-Button sends out DCC:109 Logic:0. Row is Active
 D-BUTTON,3,801,1,1          # 3 Click On D-Button sends out DCC:801 Logic:1. Row is Active
 D-BUTTON,4,806,1,1          # 4 Click On D-Button sends out DCC:806 Logic:1. Row is Active
 D-BUTTON,5,811,0,1          # 5 Click On D-Button sends out DCC:811 Logic:1. Row is Active
-D-BUTTON,6,107,1,1          # 5 Click On D-Button sends out DCC:107 Logic:1. Row is Active
-D-BUTTON,7,107,0,1          # 5 Click On D-Button sends out DCC:107 Logic:0. Row is Active
+D-BUTTON,6,107,1,1          # 6 Click On D-Button sends out DCC:107 Logic:1. Row is Active
+D-BUTTON,7,107,0,1          # 7 Click On D-Button sends out DCC:107 Logic:0. Row is Active
+D-BUTTON,8,115,1,1          # 8 Click On D-Button sends out DCC:115 Logic:1. Row is Active
 
-TIMEACC,*,*/1,0,*,101,1,0   # Every minute (at second 0), all days send DCC-Address:101 Logic:1 Row is inactive!
-TIMEACC,*,*,*/30,*,101,0,0  # Every 30 seconds (at second 0 and 30), all days send DCC-Address:101 Logic:0 Row is inactive!
+TIMEACC,*,*/1,0,*,120,1,1   # Every minute (at second 0), all days send DCC-Address:120 Logic:1 Row is active!
+TIMEACC,*,*/2,0,*,120,0,1   # Every second minute (at second 0), all days send DCC-Address:120 Logic:0 Row is active!
 
 TIMEDEX,*/1,0,0,*,<Z>,0     # Every hour (at minute 0, second 0), all days send <Z>. Row is inactive!
 TIMEDEX,6,0,0,*/2,<Q>,0     # At 06:00:00, every second day send <Q>. Row is inactive!
