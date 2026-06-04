@@ -43,8 +43,8 @@
 //SERIAL Devices.........................................
 //nowRail use Serial2.... WARNING  some boards DO NOT have Serial 2
 //Tested on ESP32 Dev Module... check other boards have Serial2 before using
-#define SERIALRX2 7 // XIAO S3 
-#define SERIALTX2 6 // XIAO S3
+#define SERIALRX2 44 // XIAO S3 - D7 (GPIO 44) is RX, 
+#define SERIALTX2 43 // XIAO S3 - D6 (GPIO 43) is TX 
 
 //MP3 Player DY-SV5W, DY-HV8F, DY_HV20T, JQ8900............................
 //See https://youtu.be/91_2KRJqaWs
