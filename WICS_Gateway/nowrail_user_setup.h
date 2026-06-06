@@ -1,10 +1,14 @@
-/*nowRailV2_0_0
+/*nowRailV2_0_1
 15/05/2026
 */
 
 #pragma once
 
 //WIFI added in Version 1.4.4
+
+// Version information
+#define NOWRAIL_VERSION "2.0.1"   // nowRail
+#define WICS_VERSION "1.0.1"      // WICS addOn
 
 //-----------------------------------------------------------------
 //All boards should be set to the same channel. Only use 1,6 and 11 for technical reasons
@@ -83,7 +87,7 @@
 //I2C Devices...........................................................
 
 //All I2C devices need the Wire.h uncommented
-//#include "Wire.h"
+#include "Wire.h"
 
 //EEPROM...........................................................
 //See https://www.digitaltown.co.uk/nowRail.php#EEPROM
@@ -98,13 +102,13 @@
 //For LEDs see https://youtu.be/xKgqPWWVrK8
 //used for Servos and LED's NOTE: LED's and servos CANNOT be on the same board address
 //#define MAXPCA9685SERVOBOARDS 5 //default is 1, increase if required
-#define SERVOMIN 450    //servo min value
-#define SERVOMAX 2000   //servo max value
+//#define SERVOMIN 450    //servo min value
+//#define SERVOMAX 2000   //servo max value
 //see https://www.digitaltown.co.uk/nowRail.php#PCA9685Servo for more information
-#define PCA9685SERVODETACH 600 //if uncommented will detach a PCA9685 servo 600 ms (0.6 seconds) after it's last movement. Change value to suit
+//#define PCA9685SERVODETACH 600 //if uncommented will detach a PCA9685 servo 600 ms (0.6 seconds) after it's last movement. Change value to suit
 //See https://www.digitaltown.co.uk/nowRail.php#PCA9685Led for more information
-#define PCA9685FLASHTIMER 1000 //any flashing PCS 9685 panel LED or accessory Leds flash timing in milliseconds
-#define PCA9685LEDOPENDRAIN 1 //will set boards driving oleds to open drain mode
+//#define PCA9685FLASHTIMER 1000 //any flashing PCS 9685 panel LED or accessory Leds flash timing in milliseconds
+//#define PCA9685LEDOPENDRAIN 1 //will set boards driving oleds to open drain mode
 
 //GT911 Touch Screen.....................................................
 //See https://www.youtube.com/watch?v=0s4-Wp4rPuw
