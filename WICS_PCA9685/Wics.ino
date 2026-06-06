@@ -326,7 +326,7 @@ void setPCA9685PWM(byte addr, byte port, int on, int off) {
   // 4. Write OFF Time High Byte
   Wire.beginTransmission(addr);
   Wire.write(regStart + 3);
-  Wire.write((off >> 8) & 0xFF);
+  Wire.write((off >> 8) & 0xFF); // Restored to your original direct bitshift
   Wire.endTransmission();
 }
 
@@ -345,30 +345,32 @@ void setPCA9685Port(byte port, bool turnOn) {
   }
 }
 
-// 4. Safe hardware initialization and Open Drain locking routine
-void initPCA9685Board(byte addr, byte hz) {
-  // Put board to sleep to allow changes to PRE_SCALE register
-  Wire.beginTransmission(addr); Wire.write(0x00); Wire.write(0x30); Wire.endTransmission(); delay(10);
+// 4. MAIN INTERFACES FOR DIRECT PCA9685 REGISTERS CONFIGURATION
+void initPCA9685Board(byte addr, byte freq) {
+    Wire.beginTransmission(addr); 
+    Wire.write(0x00); // MODE1 Register
+    Wire.write(0x30); // Sleep mode to allow frequency change
+    Wire.endTransmission(); 
+    delay(10);
   
-  // Calculate prescale value based on datasheet formulas
-  float prescaleval = 25000000.0;
-  prescaleval /= 4096.0;
-  prescaleval /= (float)hz;
-  prescaleval -= 1.0;
-  byte prescale = floor(prescaleval + 0.5);
+    // Exact original frequency calculation
+    unsigned long prescaleval = 25000000;
+    prescaleval /= 4096;
+    prescaleval /= freq;
+    prescaleval -= 1;
+    byte prescale = floor(prescaleval + 0.5);
   
-  // Write frequency 
-  Wire.beginTransmission(addr); Wire.write(0xFE); Wire.write(prescale); Wire.endTransmission(); delay(10);
+    Wire.beginTransmission(addr); 
+    Wire.write(0xFE); // PRE_SCALE Register
+    Wire.write(prescale); 
+    Wire.endTransmission(); 
+    delay(10);
   
-  // Force Open Drain structure by clearing OUTDRV bit in MODE2
-  Wire.beginTransmission(addr);
-  Wire.write(0x01); // MODE2 Register
-  Wire.write(0x00); // 0x00 locks Open Drain drive
-  Wire.endTransmission();
-  delay(10);
-
-  // Wake board back up with auto-increment enabled (0xA0)
-  Wire.beginTransmission(addr); Wire.write(0x00); Wire.write(0xA0); Wire.endTransmission(); delay(10);
+    Wire.beginTransmission(addr); 
+    Wire.write(0x00); // MODE1 Register
+    Wire.write(0xA1); // Wake up and activate auto-increment
+    Wire.endTransmission(); 
+    delay(10);
 }
 
 // Non-blocking centralized background engine handling both physics and visual animations
@@ -481,43 +483,32 @@ bool loadConfig() {
         char typeStr[16] = {0};
         int address, port, dcc;
 
-        // Read address as hexadecimal directly (e.g., "40" in file becomes 64 / 0x40)
-        if (sscanf(line.c_str(), " %15[^,], %x, %d, %d", typeStr, &address, &port, &dcc) < 4) continue;
+        // Read variables using standard decimal format for 1.0.2 compatibility
+        if (sscanf(line.c_str(), " %15[^,], %d, %d, %d", typeStr, &address, &port, &dcc) < 4) continue;
         for (int i = 0; typeStr[i]; i++) typeStr[i] = toupper(typeStr[i]);
 
         // ====================================================================
-        // PARSE SERVO DEFINITIONS (Accepts 450-2000 us, translates to 100-500)
+        // PARSE SERVO DEFINITIONS (Limits: 100-500 ticks)
         // ====================================================================
         if (strcmp(typeStr, "SERVO") == 0) {
             int a0, a1, time, enabled;
-            if (sscanf(line.c_str(), " %*[^,], %*x, %*d, %*d, %d, %d, %d, %d", &a0, &a1, &time, &enabled) >= 4) {
+            if (sscanf(line.c_str(), " %*[^,], %*d, %*d, %*d, %d, %d, %d, %d", &a0, &a1, &time, &enabled) >= 4) {
                 
-                // 1. Validate against the new microsecond intervals (450-2000 us)
-                if (a0 < 450 || a0 > 2000 || a1 < 450 || a1 > 2000) {
-                    Serial.printf("Row %d: Servo pulse values outside allowed interval (450-2000 us)!\n", lineNumber);
+                // Validate against your original hardware raw tick limits
+                if (a0 < 100 || a0 > 500 || a1 < 100 || a1 > 500) {
+                    Serial.printf("Row %d: Servo values outside allowed interval (100-500)!\n", lineNumber);
                     continue; // Skip invalid row
                 }
                 if (time < 1 || time > 60000) continue;
 
                 if (enabled == 1) {
-                    // 2. TRANSLATION: Recompute microseconds into your local raw ticks (100-500)
-                    float old_a0 = (float)a0 / 4.88;
-                    float old_a1 = (float)a1 / 4.88;
-
                     if (address >= 40 && address <= 43) { address = address + 24; }
                     
-                    // 3. Calculate movement dynamics based on translated values
-                    float totalDistance = abs(old_a1 - old_a0);
+                    float totalDistance = abs(a1 - a0);
                     float step = (time > 0) ? (totalDistance / (float)time) : totalDistance;
                     
-                    customServos.push_back({
-                        address, port, dcc, 
-                        (int)old_a0, (int)old_a1, 
-                        time, 
-                        old_a0, old_a0, 
-                        step, 
-                        millis()
-                    });
+                    // Appending strictly using your 100% working original parameter layout and float states
+                    customServos.push_back({address, port, dcc, a0, a1, time, (float)a0, (float)a0, step, millis()});
                 }
             }
         }
@@ -526,7 +517,7 @@ bool loadConfig() {
         // ==========================================
         else if (strcmp(typeStr, "LED") == 0) {
             int logic, effect, maxb, effb, enabled;
-            if (sscanf(line.c_str(), " %*[^,], %*x, %*d, %*d, %d, %d, %d, %d, %d", &logic, &effect, &maxb, &effb, &enabled) >= 5) {
+            if (sscanf(line.c_str(), " %*[^,], %*d, %*d, %*d, %d, %d, %d, %d, %d", &logic, &effect, &maxb, &effb, &enabled) >= 5) {
                 
                 if (maxb < 0 || maxb > 4095 || effb < 0 || effb > 4095) {
                     Serial.printf("Row %d: LED brightness outside allowed interval (0-4095)!\n", lineNumber);
@@ -568,7 +559,6 @@ bool loadConfig() {
     return true;
 }
 
-
 // =====================================
 // CHECK and RETRY LOAD OF CONFIGURATION
 // =====================================
@@ -606,10 +596,14 @@ bool loadConfigWithRetry() {
 //  RELOAD OF CONFIGURATION
 // ========================
 void checkConfigReload() {
+    // Do nothing the first 5 seconds after boot
+    if (millis() < 5000) return;
+
+    // Check after intervall (X ms)
     if (millis() - lastCheckTime < FILE_CHECK_INTERVAL) return;
     lastCheckTime = millis();
 
-    if (!LittleFS.exists(CONFIG_FILE)) {
+       if (!LittleFS.exists(CONFIG_FILE)) {
         lastFileSize = 0; 
         return;
     }
