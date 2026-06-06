@@ -147,8 +147,8 @@ D-BUTTON,6,107,1,1          # 6 Click On D-Button sends out DCC:107 Logic:1. Row
 D-BUTTON,7,107,0,1          # 7 Click On D-Button sends out DCC:107 Logic:0. Row is Active
 D-BUTTON,8,115,1,1          # 8 Click On D-Button sends out DCC:115 Logic:1. Row is Active
 
-TIMEACC,*,*/1,0,*,109,1,0   # Every minute (at second 0), all days send DCC-Address:109 Logic:1 Row is active!
-TIMEACC,*,*/2,0,*,109,0,0   # Every second minute (at second 0), all days send DCC-Address:109 Logic:0 Row is active!
+TIMEACC,*,*/1,0,*,109,1,1   # Every minute (at second 0), all days send DCC-Address:109 Logic:1 Row is active!
+TIMEACC,*,*/1,30,*,109,0,1  # Every minute (at second 30), all days send DCC-Address:109 Logic:0 Row is active!
 
 TIMEDEX,*/1,0,0,*,<Z>,0     # Every hour (at minute 0, second 0), all days send <Z>. Row is inactive!
 TIMEDEX,6,0,0,*/2,<Q>,0     # At 06:00:00, every second day send <Q>. Row is inactive!
