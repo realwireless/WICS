@@ -38,6 +38,9 @@ SOFTWARE.
 //This is your layout unique ID code. Can stay as is but change if you will be using near other nowRail layouts.
 nowRail myLayout(0x00, 0x01, 0x02, 0x03);
 
+// Non-nowRail function declarations so nowRail.ino can see them across tabs
+  extern void initWics();
+  extern void runWics();
 
 //NON Nowrail variables
 unsigned long currentMillis = millis();
