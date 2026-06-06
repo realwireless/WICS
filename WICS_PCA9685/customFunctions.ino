@@ -1,5 +1,5 @@
 // ===============================================
-// nowRail Custom Functions - WICS PCA9685 v 1.02
+// nowRail Custom Functions - WICS PCA9685 v 1.01
 // ===============================================
 #include <Wire.h>
 #include <vector>

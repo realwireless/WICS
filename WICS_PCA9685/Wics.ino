@@ -1,5 +1,5 @@
 // ==============================================
-//     WICS PCA9685 addon to nowRail v1.02
+//     WICS PCA9685 addon to nowRail v1.01
 //     2026-06-04 (c) 2026 Bo Holmqvist
 // ==============================================
 #include "LittleFS.h"
@@ -452,7 +452,7 @@ void updateCustomHardware() {
 } 
 
 // ======================================================================
-// CONFIG PARSER FOR SERVO/LED WITH SEPARATED VALIDATION 
+// CONFIG PARSER FOR SERVO/LED WITH SEPARATED VALIDATION (WICS v1.0.1)
 // ======================================================================
 bool loadConfig() {
     File file = LittleFS.open(CONFIG_FILE, "r");
@@ -481,36 +481,52 @@ bool loadConfig() {
         char typeStr[16] = {0};
         int address, port, dcc;
 
-        if (sscanf(line.c_str(), " %15[^,], %d, %d, %d", typeStr, &address, &port, &dcc) < 4) continue;
+        // Read address as hexadecimal directly (e.g., "40" in file becomes 64 / 0x40)
+        if (sscanf(line.c_str(), " %15[^,], %x, %d, %d", typeStr, &address, &port, &dcc) < 4) continue;
         for (int i = 0; typeStr[i]; i++) typeStr[i] = toupper(typeStr[i]);
 
-        // ==========================================
-        // PARSE SERVO DEFINITIONS (Limits: 100-500)
-        // ==========================================
+        // ====================================================================
+        // PARSE SERVO DEFINITIONS (Accepts 450-2000 us, translates to 100-500)
+        // ====================================================================
         if (strcmp(typeStr, "SERVO") == 0) {
             int a0, a1, time, enabled;
-            if (sscanf(line.c_str(), " %*[^,], %*d, %*d, %*d, %d, %d, %d, %d", &a0, &a1, &time, &enabled) >= 4) {
+            if (sscanf(line.c_str(), " %*[^,], %*x, %*d, %*d, %d, %d, %d, %d", &a0, &a1, &time, &enabled) >= 4) {
                 
-                if (a0 < 100 || a0 > 500 || a1 < 100 || a1 > 500) {
-                    Serial.printf("Row %d: Servo values outside allowed interval (100-500)!\n", lineNumber);
+                // 1. Validate against the new microsecond intervals (450-2000 us)
+                if (a0 < 450 || a0 > 2000 || a1 < 450 || a1 > 2000) {
+                    Serial.printf("Row %d: Servo pulse values outside allowed interval (450-2000 us)!\n", lineNumber);
                     continue; // Skip invalid row
                 }
                 if (time < 1 || time > 60000) continue;
 
                 if (enabled == 1) {
+                    // 2. TRANSLATION: Recompute microseconds into your local raw ticks (100-500)
+                    float old_a0 = (float)a0 / 4.88;
+                    float old_a1 = (float)a1 / 4.88;
+
                     if (address >= 40 && address <= 43) { address = address + 24; }
-                    float totalDistance = abs(a1 - a0);
+                    
+                    // 3. Calculate movement dynamics based on translated values
+                    float totalDistance = abs(old_a1 - old_a0);
                     float step = (time > 0) ? (totalDistance / (float)time) : totalDistance;
-                    customServos.push_back({address, port, dcc, a0, a1, time, (float)a0, (float)a0, step, millis()});
+                    
+                    customServos.push_back({
+                        address, port, dcc, 
+                        (int)old_a0, (int)old_a1, 
+                        time, 
+                        old_a0, old_a0, 
+                        step, 
+                        millis()
+                    });
                 }
             }
-        } 
+        }
         // ==========================================
         // PARSE LED DEFINITIONS (Limits: 0-4095)
         // ==========================================
         else if (strcmp(typeStr, "LED") == 0) {
             int logic, effect, maxb, effb, enabled;
-            if (sscanf(line.c_str(), " %*[^,], %*d, %*d, %*d, %d, %d, %d, %d, %d", &logic, &effect, &maxb, &effb, &enabled) >= 5) {
+            if (sscanf(line.c_str(), " %*[^,], %*x, %*d, %*d, %d, %d, %d, %d, %d", &logic, &effect, &maxb, &effb, &enabled) >= 5) {
                 
                 if (maxb < 0 || maxb > 4095 || effb < 0 || effb > 4095) {
                     Serial.printf("Row %d: LED brightness outside allowed interval (0-4095)!\n", lineNumber);
@@ -544,12 +560,14 @@ bool loadConfig() {
 
     // Force absolute startup OFF state on all active Open Drain LED ports
     for (const auto& led : customLeds) { setPCA9685Brightness(led.addr, led.port, 4095); }
+    
     // Drive all registered servos to their default Angle-0 home position directly
     for (const auto& s : customServos) { setPCA9685PWM(s.addr, s.port, 0, s.angle0); }
 
     Serial.printf("SUCCESS: Loaded %d Custom LEDs and %d Custom Servos into active loops.\n", customLeds.size(), customServos.size());
     return true;
 }
+
 
 // =====================================
 // CHECK and RETRY LOAD OF CONFIGURATION
@@ -635,8 +653,12 @@ void initWics() {
   uint32_t usbTime = millis();
   while (!Serial && (millis() - usbTime < 2000)) { delay(10); };
   
-  Serial.println("---WICS Init Start---");
-
+  Serial.println(F("\n======================================="));
+  Serial.println( " ### WICS Init Start ###");
+  Serial.printf( "  nowRail Core Version:  %s\n", NOWRAIL_VERSION);
+  Serial.printf( "  WICS addOn Version:    %s\n", WICS_VERSION);
+  Serial.println(F("\n======================================="));
+  
   // Configure internal status LED for Seeed Studio XIAO ESP32-S3
   pinMode(XIAO_LED, OUTPUT);
   digitalWrite(XIAO_LED, LED_OFF);

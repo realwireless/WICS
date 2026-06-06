@@ -1,10 +1,14 @@
-/*nowRailV2_0_0
+/*nowRailV2_0_1
 15/05/2026
 */
 
 #pragma once
 
 //WIFI added in Version 1.4.4
+
+// Version information
+#define NOWRAIL_VERSION "2.0.1"   // nowRail
+#define WICS_VERSION "1.0.1"      // WICS addOn
 
 //-----------------------------------------------------------------
 //All boards should be set to the same channel. Only use 1,6 and 11 for technical reasons
@@ -29,7 +33,7 @@
 
 //Delayed Accessories
 //Delayed accessories allow for accessories to be triggered after a time period
-// #define NUMDELAYEDACCS 10 //If defined Sets the number of delayed accessories that can be set up.  
+//#define NUMDELAYEDACCS 20 //If defined Sets the number of delayed accessories that can be set up.  
 
 //MASTERCLOCK
 //https://www.digitaltown.co.uk/nowRail.php#MASTERCLOCK
@@ -43,8 +47,8 @@
 //SERIAL Devices.........................................
 //nowRail use Serial2.... WARNING  some boards DO NOT have Serial 2
 //Tested on ESP32 Dev Module... check other boards have Serial2 before using
-#define SERIALRX2 44 // XIAO S3 - D7 (GPIO 44) is RX, 
-#define SERIALTX2 43 // XIAO S3 - D6 (GPIO 43) is TX 
+//#define SERIALRX2 01
+//#define SERIALTX2 00
 
 //MP3 Player DY-SV5W, DY-HV8F, DY_HV20T, JQ8900............................
 //See https://youtu.be/91_2KRJqaWs
@@ -57,8 +61,8 @@
 
 //DCC EX Serial communication.............................................
 //WARNING MAke sure SERIALRX2 and SERIALTX2 are uncommented in this file just below DIAGNOSTICS_ON 
-// #define DCCEXSSERIAL2_ON //best done on ESP32 Dev Module Writes DCC EX instructions to Serial 2...for Serial2 connection to DCC EX
-// #define DCCEXSERIAL_ON  //best done on ESP32 Dev Module Writes DCC EX instruction to Serial ... for debugging
+//#define DCCEXSSERIAL2_ON //best done on ESP32 Dev Module Writes DCC EX instructions to Serial 2...for Serial2 connection to DCC EX
+//#define DCCEXSERIAL_ON  //best done on ESP32 Dev Module Writes DCC EX instruction to Serial ... for debugging
 
 //NCE Cab bus..........................................................
 //See https://www.digitaltown.co.uk/nowRail.php#NCE
@@ -81,7 +85,6 @@
 //#define ONEBITTIME 130  // If your DCC system does not work you can change this value. NCE systems and DCCEX seem to work between 130 - 180
 
 //I2C Devices...........................................................
-
 //All I2C devices need the Wire.h uncommented
 #include "Wire.h"
 
