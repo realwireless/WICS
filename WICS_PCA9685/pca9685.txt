@@ -33,8 +33,8 @@
 # 2. [Address]       PCA9685 Module address 40-43 (Hex address). 
 # 3. [Port]          PCA9685 port numer 0-15.
 # 4. [DCC]           The DCC Address to the port (1-9999) DCC systems can have a limit 1-2000. 
-# 5. [Angel-0]       How many degrees the servo should turn when logic=0. (Min=100, Max=500).     	
-# 6. [Angle-1]       How many degrees the servo should turn when logic=1  (Min=100, Max=500).
+# 5. [Angel-0]       Move to position  when logic=0. (Min=100, Max=500).     	
+# 6. [Angle-1]       Move to position  when logic=1. (Min=100, Max=500).
 # 7. [Move-speed]    How fast/slow in milliseconds the servo should turn. (1-60 000) 
 # 8. [Enabled]       PCA9685 port 1=Active, 0=Disabled (Ignored). (0/1).
 #
@@ -56,7 +56,7 @@ LED,40,5,105,1,0,4095,0,1
 LED,40,6,107,1,4,0,4095,1 #RR Crossing
 LED,40,7,107,1,4,4095,0,1 #RR Crossing
 LED,40,8,106,1,0,4095,0,1
-LED,40,9,109,1,0,4095,0,1 #Normal LED
+LED,40,9,109,1,0,4095,0,1 #Normal LED (Strip)
 LED,40,10,110,1,0,4095,0,1
 LED,40,11,111,1,0,4095,0,1
 LED,40,12,112,1,0,4095,0,1
