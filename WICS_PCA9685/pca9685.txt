@@ -1,5 +1,5 @@
 # ================================================================================================
-#                          WICS PCA9685 CONFIGURATION FILE v1.0.1        (2026-06-02 Bo Holmqvist)
+#                          WICS PCA9685 CONFIGURATION FILE v1.1.0         (2026-06- Bo Holmqvist)
 # ================================================================================================
 # [type] is either LED or SERVO
 # Max 4 PCA9685 modules can be Daisy-Chained after each other per WICS Board. Individual addresses.  
@@ -33,15 +33,15 @@
 # 2. [Address]       PCA9685 Module address 40-43 (Hex address). 
 # 3. [Port]          PCA9685 port numer 0-15.
 # 4. [DCC]           The DCC Address to the port (1-9999) DCC systems can have a limit 1-2000. 
-# 5. [Angel-0]       Move to position  when logic=0. (Min=100, Max=500).     	
-# 6. [Angle-1]       Move to position  when logic=1. (Min=100, Max=500).
+# 5. [Angel-0]       How many degrees the servo should turn when logic=0. (Min=0, Max=360).     	
+# 6. [Angle-1]       How many degrees the servo should turn when logic=1  (Min=0, Max=360).
 # 7. [Move-speed]    How fast/slow in milliseconds the servo should turn. (1-60 000) 
 # 8. [Enabled]       PCA9685 port 1=Active, 0=Disabled (Ignored). (0/1).
 #
 # SERVO Example:
-#   1   2  3  4   5   6    7  8 
-# SERVO,41,0,200,500,1500,500,1
-# Address 0x41, Port-0, DCC-Address=200, move 500 when 0, move 1500 when 1, speed 500ms , Active 
+#   1   2  3  4  5   6    7  8 
+# SERVO,41,0,200,50,150,500,1
+# Address 0x41, Port-0, DCC-Address=200, move 50 when 0, move 150 when 1, speed 500ms , Active 
 #
 # ================================================================================================
 # MY ACTUAL RUNNING CONFIGURATION
@@ -65,4 +65,4 @@ LED,40,14,114,1,0,4095,0,1
 LED,40,15,115,1,3,4095,0,1 #ARC WELDER
 
 # PCA9685 Module-2 0x41 SERVO. DCC address 120-125
-SERVO,41,0,120,150,450,500,1
+SERVO,41,0,120,50,150,500,1

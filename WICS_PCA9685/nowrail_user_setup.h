@@ -1,5 +1,5 @@
-/*nowRailV2_0_1
-15/05/2026
+/*nowRailV2_1_0
+04/06/2026
 */
 
 #pragma once
@@ -7,8 +7,8 @@
 //WIFI added in Version 1.4.4
 
 // Version information
-#define NOWRAIL_VERSION "2.0.1"   // nowRail
-#define WICS_VERSION "1.0.1"      // WICS addOn
+#define NOWRAIL_VERSION "2.1.0"   // nowRail
+#define WICS_VERSION "1.1.0"      // WICS addOn
 
 //-----------------------------------------------------------------
 //All boards should be set to the same channel. Only use 1,6 and 11 for technical reasons
@@ -33,7 +33,7 @@
 
 //Delayed Accessories
 //Delayed accessories allow for accessories to be triggered after a time period
-//#define NUMDELAYEDACCS 20 //If defined Sets the number of delayed accessories that can be set up.  
+//#define NUMDELAYEDACCS 10 //If defined Sets the number of delayed accessories that can be set up.  
 
 //MASTERCLOCK
 //https://www.digitaltown.co.uk/nowRail.php#MASTERCLOCK
@@ -47,8 +47,8 @@
 //SERIAL Devices.........................................
 //nowRail use Serial2.... WARNING  some boards DO NOT have Serial 2
 //Tested on ESP32 Dev Module... check other boards have Serial2 before using
-//#define SERIALRX2 01
-//#define SERIALTX2 00
+//#define SERIALRX2 16
+//#define SERIALTX2 17
 
 //MP3 Player DY-SV5W, DY-HV8F, DY_HV20T, JQ8900............................
 //See https://youtu.be/91_2KRJqaWs
@@ -85,8 +85,14 @@
 //#define ONEBITTIME 130  // If your DCC system does not work you can change this value. NCE systems and DCCEX seem to work between 130 - 180
 
 //I2C Devices...........................................................
+
 //All I2C devices need the Wire.h uncommented
 #include "Wire.h"
+//If you wish to set custom SDA and SDA pins as required on 
+//ESP32 C3 and S3 boards uncomment the lines below and set pin numbers
+//Commenting out will use the default pins as shown on the ESP32 Dev Module wiring diagrams 
+#define CUSTOM_SDA 5 //SDA cutom pin number (XIAO ESP32-S3)
+#define CUSTOM_SCL 6 //SCL custom pin number (XIAO ESP32-S3)
 
 //EEPROM...........................................................
 //See https://www.digitaltown.co.uk/nowRail.php#EEPROM
@@ -104,7 +110,7 @@
 #define SERVOMIN 450    //servo min value
 #define SERVOMAX 2000   //servo max value
 //see https://www.digitaltown.co.uk/nowRail.php#PCA9685Servo for more information
-#define PCA9685SERVODETACH 600 //if uncommented will detach a PCA9685 servo 600 ms (0.6 seconds) after it's last movement. Change value to suit
+#define PCA9685SERVODETACH 1500 //if uncommented will detach a PCA9685 servo 600 ms (0.6 seconds) after it's last movement. Change value to suit
 //See https://www.digitaltown.co.uk/nowRail.php#PCA9685Led for more information
 #define PCA9685FLASHTIMER 1000 //any flashing PCS 9685 panel LED or accessory Leds flash timing in milliseconds
 #define PCA9685LEDOPENDRAIN 1 //will set boards driving oleds to open drain mode

@@ -1,7 +1,12 @@
-/*nowRailV2_0_1
-30/05/2026
+/*nowRailV2_1_0
+04/06/2026
 
 Additions
+2_1_0 ability to set custom SDA/SCL pins using
+#define CUSTOM_SDA 4 //SDA cutom pin number
+#define CUSTOM_SCL 5 //SCL custom pin number
+This allows the use os ESP32 C3 and S3 boards
+
 2.0.1
 nowChannelUpdate() in customFunctions.ino gives wifiChannelUpdate info
 2.0.0
@@ -35,8 +40,6 @@ SOFTWARE.
 */
 //This line sets up the system
 #include "nowRail.h"  //include the nowRail class
-#include <Wire.h>     // Garantera att Wire är inkluderat i denna flik också
-
 //This is your layout unique ID code. Can stay as is but change if you will be using near other nowRail layouts.
 nowRail myLayout(0x00, 0x01, 0x02, 0x03);
 
@@ -49,21 +52,22 @@ unsigned long currentMillis = millis();
 
 
 void setup() {
-  Serial.begin(115200); // Standard Serial Output to Serial monitor
+  Serial.begin(115200);//Standard Serial Output to Serial monitor
+  //Serial.begin(115200, SERIAL_8N2);//SERIAL_8N2 required if JMRICMRI connection
+  Serial.println(F(__FILE__ " " __DATE__ " " __TIME__));  //File details
   
-  // Adjustment for WICS Control of Servo & LED
-  Wire.begin(5, 6);       // XIAO ESP32-S3
-  Wire.setClock(100000);  // Standard speed 
-  
-  Serial.println(F(__FILE__ " " __DATE__ " " __TIME__));  // File details
-
-  // Start the system
-  myLayout.init();  // This functions sets up ESP-NOW as well as other items needed for the system to run
-  initWics();       // This function sets up WICS addOn for nowRail 
+  //Start the system
+  myLayout.init();//This functions sets up ESP-NOW as well as other items needed for the system to run
+  initWics(); // This function sets up WICS addOn for nowRail 
 }
+
+//unsigned long currentMillis;
+unsigned long timerMillis;
+uint16_t timerTime = 5000;
+byte timerState;
 
 void loop() {
   currentMillis = millis();
-  myLayout.runLayout(); // This sits in the main loop and needs to run as often as possible
-  runWics();            // Wics addOn to nowRail
+  myLayout.runLayout();//This sits in the main loop and needs to run as often as possible
+  runWics(); // Wics addOn to nowRail
 }

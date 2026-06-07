@@ -1,6 +1,6 @@
 // ==============================================
-//     WICS PCA9685 addon to nowRail v1.01
-//     2026-06-04 (c) 2026 Bo Holmqvist
+//     WICS PCA9685 addon to nowRail v1.1.0
+//     2026-06-06 (c) 2026 Bo Holmqvist
 // ==============================================
 #include "LittleFS.h"
 #include <WiFi.h>
@@ -24,27 +24,8 @@ size_t lastFileSize = 0;
 unsigned long lastCheckTime = 0;
 
 // I2C
-const int SDA_PIN = 5; // XIAO ESP32-S3 STD
-const int SCL_PIN = 6; // XIAO ESP32-S3 STD
-
-// Structure to hold custom configuration data for LEDs with active effect timers
-struct MyLedConfig {
-    int addr; int port; int dcc; int logic; int effect; int maxb; int effb;
-    bool isActive;              // Tracks if the DCC address turned this light ON
-    unsigned long lastEffectUpdate; // Unique timer tracking variable per port
-    int currentBrightness;      // Holds ongoing active dimmed state
-    bool flashState;            // Used by effect 4 for flip-flop tracking
-};
-
-// Structure to hold custom configuration and movement physics for Servos
-struct MyServoConfig {
-    int addr; int port; int dcc; int angle0; int angle1; int speed;
-    float currentPulse; float targetPulse; float stepSize; unsigned long lastPosUpdate;
-};
-
-// Vector storage definitions
-std::vector<MyLedConfig> customLeds;
-std::vector<MyServoConfig> customServos;
+// const int SDA_PIN = 4; // XIAO ESP32-S3 STD
+// const int SCL_PIN = 5; // XIAO ESP32-S3 STD
 
 // LED BLINK STATE
 int blinkRemaining = 0;
@@ -86,7 +67,7 @@ uint8_t currentWiFiChannel = WIFICHANNEL;
 
 // ==============================================
 // ==============================================
-   //       #### WICS FUNCTIONS ###
+//       #### WICS FUNCTIONS ###
 // ==============================================
 // ==============================================
 
@@ -297,183 +278,77 @@ void handleFileUpload() {
   }
 }
 
-// ===================
-//  PCA9685 FUNCTIONS
-// ===================
-// 1. Lowest level hardware write function (Must be first!)
-// Explicit low-level register write bypasses auto-increment dependencies entirely
-void setPCA9685PWM(byte addr, byte port, int on, int off) {
-  byte regStart = 0x06 + (port * 4);
-  
-  // 1. Write ON Time Low Byte
-  Wire.beginTransmission(addr);
-  Wire.write(regStart);
-  Wire.write(on & 0xFF);
-  Wire.endTransmission();
-
-  // 2. Write ON Time High Byte
-  Wire.beginTransmission(addr);
-  Wire.write(regStart + 1);
-  Wire.write((on >> 8) & 0xFF);
-  Wire.endTransmission();
-
-  // 3. Write OFF Time Low Byte
-  Wire.beginTransmission(addr);
-  Wire.write(regStart + 2);
-  Wire.write(off & 0xFF);
-  Wire.endTransmission();
-
-  // 4. Write OFF Time High Byte
-  Wire.beginTransmission(addr);
-  Wire.write(regStart + 3);
-  Wire.write((off >> 8) & 0xFF); // Restored to your original direct bitshift
-  Wire.endTransmission();
-}
-
-// 2. High-level brightness mapper for Open Drain outputs
-void setPCA9685Brightness(byte addr, byte port, int brightness) {
-  int safeValue = constrain(brightness, 0, 4095);
-  setPCA9685PWM(addr, port, 0, safeValue);
-}
-
-// 3. Old compatibility function for single-board default writes
-void setPCA9685Port(byte port, bool turnOn) {
-  if (turnOn) {
-    setPCA9685PWM(0x40, port, 0, 0x1000); 
-  } else {
-    setPCA9685PWM(0x40, port, 0x1000, 0);
-  }
-}
-
-// 4. MAIN INTERFACES FOR DIRECT PCA9685 REGISTERS CONFIGURATION
-void initPCA9685Board(byte addr, byte freq) {
-    Wire.beginTransmission(addr); 
-    Wire.write(0x00); // MODE1 Register
-    Wire.write(0x30); // Sleep mode to allow frequency change
-    Wire.endTransmission(); 
-    delay(10);
-  
-    // Exact original frequency calculation
-    unsigned long prescaleval = 25000000;
-    prescaleval /= 4096;
-    prescaleval /= freq;
-    prescaleval -= 1;
-    byte prescale = floor(prescaleval + 0.5);
-  
-    Wire.beginTransmission(addr); 
-    Wire.write(0xFE); // PRE_SCALE Register
-    Wire.write(prescale); 
-    Wire.endTransmission(); 
-    delay(10);
-  
-    Wire.beginTransmission(addr); 
-    Wire.write(0x00); // MODE1 Register
-    Wire.write(0xA1); // Wake up and activate auto-increment
-    Wire.endTransmission(); 
-    delay(10);
-}
-
-// Non-blocking centralized background engine handling both physics and visual animations
-void updateCustomHardware() {
-  unsigned long now = millis();
-
-  // 1. PROCESS SMOOTH SERVO MOVEMENTS
-  for (auto& s : customServos) {
-    if (s.currentPulse != s.targetPulse) {
-      long elapsed = now - s.lastPosUpdate;
-      if (elapsed > 0) {
-        s.lastPosUpdate = now;
-        float moveAmnt = s.stepSize * elapsed;
-        
-        if (s.currentPulse < s.targetPulse) {
-          s.currentPulse += moveAmnt; if (s.currentPulse > s.targetPulse) s.currentPulse = s.targetPulse;
-        } else {
-          s.currentPulse -= moveAmnt; if (s.currentPulse < s.targetPulse) s.currentPulse = s.targetPulse;
-        }
-        setPCA9685PWM(s.addr, s.port, 0, (int)s.currentPulse);
-      }
-    }
-  }
-
-  // 2. PROCESS LIGHTING EFFECTS (0 = static, 1 = fire, 2 = gas, 3 = welder, 4 = flash)
-   for (auto& led : customLeds) {
-    if (!led.isActive) {
-      // Light is deactivated via DCC: Force completely OFF state (4095 = Cut ground/OFF)
-      setPCA9685Brightness(led.addr, led.port, 4095);
-      continue;
-    }
-
-    // Process active animation layers frame-by-frame
-    switch (led.effect) {
-      case 0: // Standard static on/off logic
-        setPCA9685Brightness(led.addr, led.port, led.maxb);
-        break;
-
-      case 1: // Realistic Fire Flicker (Random timing + random quick dimming)
-        if (now - led.lastEffectUpdate >= led.lastEffectUpdate % 45 + 30) {
-          led.lastEffectUpdate = now;
-          int targetBright = random(led.effb, led.maxb);
-          setPCA9685Brightness(led.addr, led.port, targetBright);
-        }
-        break;
-
-      case 2: // Old Gas Light (Steady glow broken up by sudden accidental flickering)
-        if (now - led.lastEffectUpdate >= led.lastEffectUpdate % 200 + 50) {
-          led.lastEffectUpdate = now;
-          if (random(0, 100) > 92) {
-            setPCA9685Brightness(led.addr, led.port, random(led.effb, led.maxb / 2)); // Deep drop
-          } else {
-            setPCA9685Brightness(led.addr, led.port, random(led.maxb - 200, led.maxb)); // Normal hum
-          }
-        }
-        break;
-
-      case 3: // Intense Arc Welder (Violent random sparks bursts with cool-down breaks)
-        if (now - led.lastEffectUpdate >= led.lastEffectUpdate % 30 + 5) {
-          led.lastEffectUpdate = now;
-          if (random(0, 100) > 40) {
-            setPCA9685Brightness(led.addr, led.port, random(led.effb, led.maxb)); // Bright blue-white burst
-          } else {
-            setPCA9685Brightness(led.addr, led.port, 0); // Brief dark arc gap
-          }
-        }
-        break;
-
- case 4: // Standard Crossing Flashing Signal (Alternates evenly based on fixed timer intervals)
-        // Uses the PCA9685FLASHTIMER mapping or falls back to a perfect 500ms level
-        if (now - led.lastEffectUpdate >= 500) { 
-          led.lastEffectUpdate = now;
-          led.flashState = !led.flashState;
-          
-          // Pass the values raw to alternate the channels perfectly
-          setPCA9685Brightness(led.addr, led.port, led.flashState ? led.maxb : led.effb);
-        }
-        break;          
-    } 
-  } 
-} 
-
 // ======================================================================
-// CONFIG PARSER FOR SERVO/LED WITH SEPARATED VALIDATION (WICS v1.0.1)
+// CONFIG PARSER WITH AUTOMATIC PCA9685 HARDWARE DETECTION & DIAGNOSTICS
 // ======================================================================
 bool loadConfig() {
+    // 1. Clear error.txt before the new execution
+    File clearLog = LittleFS.open("/error.txt", "w");
+    if (clearLog) {
+        clearLog.close(); 
+    }
+
+    // 2. DETECT CONNECTED PCA9685 MODULES (Addresses 0x40 - 0x43)
+    bool boardConnected[] = {false, false, false, false}; 
+    Serial.println("\n--- Scanning for connected PCA9685 modules ---");
+    
+    Wire.begin(); // Forces I2C bus to start before scanning
+    
+    for (int b = 0; b < 4; b++) {
+        int currentAddr = 64 + b; // 64 is decimal for 0x40
+        
+        Wire.beginTransmission(currentAddr);
+        byte error = Wire.endTransmission();
+        
+        if (error == 0) {
+            boardConnected[b] = true;
+            Serial.printf("Found PCA9685 board at address: 0x%02X\n", currentAddr);
+            
+            // Force Open Drain mode immediately when a board is found (OUTDRV = 0)
+            Wire.beginTransmission(currentAddr);
+            Wire.write(0x01); // MODE2 Register
+            Wire.write(0x01); // Sets OUTDRV = 0 (Open Drain) and OUTNE = 01
+            Wire.endTransmission();
+
+            // Clear any leftover register memory by forcing ALL ports to a safe OFF state
+            Wire.beginTransmission(currentAddr);
+            Wire.write(0xFA); // ALL_LED_ON_L Register
+            Wire.write(0x00); // ON L = 0
+            Wire.write(0x00); // ON H = 0
+            Wire.write(0x00); // OFF L = 0
+            Wire.write(0x10); // OFF H = 0x10 (Forces full hardware shutdown on all pins)
+            Wire.endTransmission();
+        }
+    }
+    Serial.println("----------------------------------------------");
+
+    // 3. Open configuration file
     File file = LittleFS.open(CONFIG_FILE, "r");
     if (!file) {
         Serial.println("ERROR: Cannot open config file!");
+        logConfigError("ERROR: Cannot open config file");
         return false;
     }
 
-    customLeds.clear();
-    customServos.clear();
+    bool hasErrors = false;
     int lineNumber = 0;
+
+    // Structs to save OK data before activating nowRail myLayout commands
+    struct ServoConfig { int addr, port, dcc, a0, a1, time; };
+    struct LedConfig { int addr, port, dcc, logic, effect, maxb, effb; };
+    
+    std::vector<ServoConfig> validServos;
+    std::vector<LedConfig> validLeds;
 
     while (file.available()) {
         lineNumber++;
         String line = file.readStringUntil('\n');
         line.trim();
 
+        // Skip empty lines and pure comments
         if (line.length() == 0 || line.startsWith("#")) continue;
 
+        // Strip comments at the end of the line
         int commentPos = line.indexOf('#');
         if (commentPos >= 0) {
             line = line.substring(0, commentPos);
@@ -483,105 +358,173 @@ bool loadConfig() {
         char typeStr[16] = {0};
         int address, port, dcc;
 
-        // Read variables using standard decimal format for 1.0.2 compatibility
-        if (sscanf(line.c_str(), " %15[^,], %d, %d, %d", typeStr, &address, &port, &dcc) < 4) continue;
+        // Read address as hexadecimal directly (e.g., "40" in file becomes 64 / 0x40)
+        if (sscanf(line.c_str(), " %15[^,], %x, %d, %d", typeStr, &address, &port, &dcc) < 4) {
+            hasErrors = true;
+            Serial.printf("Row %d: Format error: (Type,Address,Port,DCC)\n", lineNumber);
+            logConfigError("Format error: (Type,Address,Port,DCC)", lineNumber);
+            continue;
+        }
+
+        // Hardcoded interval validation (0x40 = 64, 0x43 = 67)
+        if (address < 64 || address > 67) {
+            hasErrors = true;
+            Serial.printf("Row %d: Address outside allowed interval (40-43): 0x%02X\n", lineNumber, address);
+            logConfigError("Address outside allowed interval (40-43): " + String(address, HEX), lineNumber);
+            continue;
+        }
+
+        // Only skips the row if board is missing (does NOT halt the system)
+        int boardIndex = address - 64; 
+        if (!boardConnected[boardIndex]) {
+            Serial.printf("Row %d: Hardware warning: Board 0x%02X is defined but NOT physically connected! Skipping line.\n", lineNumber, address);
+            logConfigError("Hardware warning: Board 0x" + String(address, HEX) + " is defined but NOT physically connected! Skipping line.", lineNumber);
+            continue; 
+        }
+
+        if (port < 0 || port > 15) {
+            hasErrors = true;
+            Serial.printf("Row %d: Port outside allowed interval (0-15): %d\n", lineNumber, port);
+            logConfigError("Port outside allowed interval (0-15): " + String(port), lineNumber);
+            continue;
+        }
+        if (dcc < 1 || dcc > 9999) {
+            hasErrors = true;
+            Serial.printf("Row %d: DCC outside allowed interval (1-9999): %d\n", lineNumber, dcc);
+            logConfigError("DCC outside allowed interval (1-9999): " + String(dcc), lineNumber);
+            continue;
+        }
+
+        // Convert the type string to uppercase
         for (int i = 0; typeStr[i]; i++) typeStr[i] = toupper(typeStr[i]);
 
-        // ====================================================================
-        // PARSE SERVO DEFINITIONS (Limits: 100-500 ticks)
-        // ====================================================================
+        // ====================
+        // SERVO HANDLING
+        // ====================
         if (strcmp(typeStr, "SERVO") == 0) {
             int a0, a1, time, enabled;
-            if (sscanf(line.c_str(), " %*[^,], %*d, %*d, %*d, %d, %d, %d, %d", &a0, &a1, &time, &enabled) >= 4) {
-                
-                // Validate against your original hardware raw tick limits
-                if (a0 < 100 || a0 > 500 || a1 < 100 || a1 > 500) {
-                    Serial.printf("Row %d: Servo values outside allowed interval (100-500)!\n", lineNumber);
-                    continue; // Skip invalid row
-                }
-                if (time < 1 || time > 60000) continue;
-
-                if (enabled == 1) {
-                    if (address >= 40 && address <= 43) { address = address + 24; }
-                    
-                    float totalDistance = abs(a1 - a0);
-                    float step = (time > 0) ? (totalDistance / (float)time) : totalDistance;
-                    
-                    // Appending strictly using your 100% working original parameter layout and float states
-                    customServos.push_back({address, port, dcc, a0, a1, time, (float)a0, (float)a0, step, millis()});
-                }
+            if (sscanf(line.c_str(), " %*[^,], %*x, %*d, %*d, %d, %d, %d, %d", &a0, &a1, &time, &enabled) < 4) {
+                hasErrors = true;
+                Serial.printf("Row %d: Servo missing parameters!\n", lineNumber);
+                logConfigError("Servo missing parameters (Need: Angle-0,Angle-1,Move-speed,Enabled)", lineNumber);
+                continue;
             }
-        }
-        // ==========================================
-        // PARSE LED DEFINITIONS (Limits: 0-4095)
-        // ==========================================
-        else if (strcmp(typeStr, "LED") == 0) {
-            int logic, effect, maxb, effb, enabled;
-            if (sscanf(line.c_str(), " %*[^,], %*d, %*d, %*d, %d, %d, %d, %d, %d", &logic, &effect, &maxb, &effb, &enabled) >= 5) {
-                
-                if (maxb < 0 || maxb > 4095 || effb < 0 || effb > 4095) {
-                    Serial.printf("Row %d: LED brightness outside allowed interval (0-4095)!\n", lineNumber);
-                    continue; // Skip invalid row
-                }
 
-                if (enabled == 1) {
-                    if (address >= 40 && address <= 43) { address = address + 24; }
-                    customLeds.push_back({address, port, dcc, logic, effect, maxb, effb, false, (unsigned long)random(0, 1000), 0, false});
-                }
+            // FIXED: SERVO validation matched with nowRail's SERVOMIN (450) and SERVOMAX (2000)
+            if (a0 < 0 || a0 > 360 || a1 < 0 || a1 > 360) {
+                hasErrors = true;
+                Serial.printf("Row %d: Servo pulse values outside allowed interval (0-360 us)!\n", lineNumber);
+                logConfigError("Servo pulse values outside allowed interval (0-360 us)", lineNumber);
+                continue;
+            }
+            if (time < 1 || time > 60000) continue;
+            if (enabled < 0 || enabled > 1) continue;
+
+            if (enabled == 1) {
+                validServos.push_back({address, port, dcc, a0, a1, time});
             }
         } 
-    }
-    file.close();
+        // ====================
+        // LED HANDLING
+        // ====================
+        else if (strcmp(typeStr, "LED") == 0) {
+            int logic, effect, maxb, effb, enabled;
+            if (sscanf(line.c_str(), " %*[^,], %*x, %*d, %*d, %d, %d, %d, %d, %d", &logic, &effect, &maxb, &effb, &enabled) < 5) {
+                hasErrors = true;
+                Serial.printf("Row %d: LED missing parameters!\n", lineNumber);
+                logConfigError("LED missing parameters", lineNumber);
+                continue;
+            }
 
-    // Post-Parsing Auto-Configuration Loop for active layout modules (64 to 67 / 0x40 to 0x43)
-    Serial.println("Scanning and auto-configuring detected PCA9685 board types...");
-    for (int boardAddr = 64; boardAddr <= 67; boardAddr++) {
-        bool hasServos = false; bool hasLeds = false;
-        for (const auto& s : customServos) { if (s.addr == boardAddr) { hasServos = true; break; } }
-        for (const auto& l : customLeds)   { if (l.addr == boardAddr) { hasLeds = true; break; } }
+            // LED validation
+            if (maxb < 0 || maxb > 4095 || effb < 0 || effb > 4095) {
+                hasErrors = true;
+                Serial.printf("Row %d: LED brightness outside allowed interval (0-4095)!\n", lineNumber);
+                logConfigError("LED brightness outside allowed interval (0-4095)", lineNumber);
+                continue;
+            }
+            if (logic < 0 || logic > 1) continue;
+            if (effect < 0 || effect > 4) continue;
+            if (enabled < 0 || enabled > 1) continue;
 
-        if (hasServos) {
-            Serial.printf("-> Board 0x%02X classified as SERVO. Setting frequency to 50Hz.\n", boardAddr);
-            initPCA9685Board(boardAddr, 50);
-        } else if (hasLeds) {
-            Serial.printf("-> Board 0x%02X classified as LED. Setting frequency to 200Hz.\n", boardAddr);
-            initPCA9685Board(boardAddr, 200);
+            if (enabled == 1) {
+                validLeds.push_back({address, port, dcc, logic, effect, maxb, effb});
+            }
+        } 
+        else {
+            hasErrors = true;
+            Serial.printf("Row %d: Unknown TYPE (Must be LED or SERVO): %s\n", lineNumber, typeStr);
+            logConfigError("Unknown TYPE (Must be LED or SERVO): " + String(typeStr), lineNumber);
         }
     }
 
-    // Force absolute startup OFF state on all active Open Drain LED ports
-    for (const auto& led : customLeds) { setPCA9685Brightness(led.addr, led.port, 4095); }
-    
-    // Drive all registered servos to their default Angle-0 home position directly
-    for (const auto& s : customServos) { setPCA9685PWM(s.addr, s.port, 0, s.angle0); }
+    file.close();
 
-    Serial.printf("SUCCESS: Loaded %d Custom LEDs and %d Custom Servos into active loops.\n", customLeds.size(), customServos.size());
+    // If critical syntax/format errors occurred, abort execution
+    if (hasErrors) {
+        Serial.println("Critical syntax error in configuration. No commands executed!");
+        return false;
+    }
+
+    // Delete error.txt completely if the configuration is accepted (warnings are okay)
+    LittleFS.remove("/error.txt");
+
+    // Snygg efteranalys och klassificering av korten till Serial Monitor (Från din gamla kod)
+    Serial.println("Analyzing and registering components to nowRail...");
+    for (int boardAddr = 64; boardAddr <= 67; boardAddr++) {
+        bool hasServos = false; bool hasLeds = false;
+        for (const auto& s : validServos) { if (s.addr == boardAddr) { hasServos = true; break; } }
+        for (const auto& l : validLeds)   { if (l.addr == boardAddr) { hasLeds = true; break; } }
+
+        if (hasServos) {
+            Serial.printf("-> Board 0x%02X classified as SERVO. nowRail handling frequencies.\n", boardAddr);
+        } else if (hasLeds) {
+            Serial.printf("-> Board 0x%02X classified as LED. nowRail handling frequencies.\n", boardAddr);
+        }
+    }
+
+    // Execute all approved servo and led commands via nowRail
+    for (const auto& s : validServos) {
+       myLayout.addPCA9685Servo(s.addr, s.port, s.dcc, s.a0, s.a1, s.time);
+    }
+    for (const auto& l : validLeds) {
+        myLayout.addPCA9685Led(l.addr, l.port, l.dcc, l.logic, l.effect, l.maxb, l.effb);
+    }
+
+    Serial.printf("SUCCESS: Loaded %d Valid LEDs and %d Valid Servos into nowRail.\n", validLeds.size(), validServos.size());
     return true;
 }
+
 
 // =====================================
 // CHECK and RETRY LOAD OF CONFIGURATION
 // =====================================
 bool loadConfigWithRetry() {
-    const int MAX_ATTEMPTS = 5;       
-    const unsigned long RETRY_DELAY = 10000; 
+    const int MAX_ATTEMPTS = 5;       // Number of retries (X)
+    const unsigned long RETRY_DELAY = 10000; // Waiting time in ms (Y) -> 10 seconds
 
     for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
         Serial.printf("Attempt %d of %d to load configuration...\n", attempt, MAX_ATTEMPTS);
 
         if (LittleFS.exists(CONFIG_FILE)) {
+            // File exist - run Parser
             if (loadConfig()) {
-                return true; 
+                return true; // Success!
             }
-            return false; 
+            // If loadConfig() returned false there is an error in the file. Halt!
+               return false; 
+            // ESP.restart(); // Restart the Microcontroller
         }
 
         Serial.println("Configuration file is missing!");
+        
+        // If last attempt - break
         if (attempt == MAX_ATTEMPTS) break;
 
         Serial.println("Waiting for Configuration file to be uploaded ...");
-        wStatusBlink(7, 200); 
+        wStatusBlink(7, 200); // Visual indication by internal LED
 
+        // Non-Blocking wait
         unsigned long startWait = millis();
         while (millis() - startWait < RETRY_DELAY) {
             updateStatusBlink();
@@ -589,21 +532,20 @@ bool loadConfigWithRetry() {
             yield();
         }
     }
-    return false; 
+
+    return false; // All attempts failed
 }
 
 // ========================
 //  RELOAD OF CONFIGURATION
 // ========================
 void checkConfigReload() {
-    // Do nothing the first 5 seconds after boot
-    if (millis() < 5000) return;
-
     // Check after intervall (X ms)
     if (millis() - lastCheckTime < FILE_CHECK_INTERVAL) return;
     lastCheckTime = millis();
 
-       if (!LittleFS.exists(CONFIG_FILE)) {
+    // If file not exist reset filesize. Ready for new 
+    if (!LittleFS.exists(CONFIG_FILE)) {
         lastFileSize = 0; 
         return;
     }
@@ -614,25 +556,29 @@ void checkConfigReload() {
     size_t currentSize = file.size();
     file.close();
 
+    // First run after File exist 
     if (lastFileSize == 0) {
         lastFileSize = currentSize;
+        
+        // Load configuration directly (New file or Startup) 
         Serial.println("New configuration file found. Loading...");
         if (loadConfig()) {
-            wStatusBlink(2, 300); 
+            wStatusBlink(2, 300); // Visual indication OK
         } else {
-            wStatusBlink(5, 50); 
+            wStatusBlink(5, 50); // Visual indication FAIL
         }
         return;
     }
 
+    // If filesize changed during run - Reload 
     if (currentSize != lastFileSize) {
         Serial.println("CONFIG CHANGE DETECTED → reloading");
         lastFileSize = currentSize;
 
         if (loadConfig()) {
-            wStatusBlink(2, 300); 
+            wStatusBlink(2, 300); // Visual indication OK
         } else {
-            wStatusBlink(5, 50); 
+            wStatusBlink(5, 50); // Visual indication FAIL
         }
     }
 }
@@ -643,7 +589,7 @@ void checkConfigReload() {
 // ==============================================
 // ==============================================
 void initWics() {
-  Serial.begin(115200);
+    Serial.begin(115200);
   uint32_t usbTime = millis();
   while (!Serial && (millis() - usbTime < 2000)) { delay(10); };
   
@@ -652,66 +598,79 @@ void initWics() {
   Serial.printf( "  nowRail Core Version:  %s\n", NOWRAIL_VERSION);
   Serial.printf( "  WICS addOn Version:    %s\n", WICS_VERSION);
   Serial.println(F("\n======================================="));
-  
-  // Configure internal status LED for Seeed Studio XIAO ESP32-S3
+
+  // XIAO ESP32-S3
   pinMode(XIAO_LED, OUTPUT);
   digitalWrite(XIAO_LED, LED_OFF);
+   // Wire.begin(SDA_PIN, SCL_PIN);
+   // Wire.begin(SDA, SCL); // Use default PINS
    
   // ========================
   // Check LittleFS
   // ========================
   if (!LittleFS.begin(true)) {
-    Serial.println("CRITICAL ERROR: LittleFS mount FAILED! System on HOLD!");
-    wStatusBlink(5, 50); 
+    Serial.println("CRITICAL ERROR: LittleFS mount FAILED!. System on HOLD!");
+    wStatusBlink(5, 50); // Visual indication CRITICAL ERROR
     
-    // Halt execution if partition layout layer fails to mount
+    // System on HOLD 
     while (true) {
-      updateStatusBlink(); 
+      updateStatusBlink(); // Blink
       delay(1);
-      yield();             
+      yield();             // Watchdog-timer 
     }
   }
 
-  // Read or generate default fallback configuration files
+  // Read or create wifi.txt
   initWiFiConfig();
 
   // ==================================
   // Start AccessPoint & Web if enabled
   // ==================================
   if (wifiStatus == "on") {
-    wics_configureWiFi(WIFICHANNEL, true); 
+    wics_configureWiFi(WIFICHANNEL, true); // nowRail channel 
   } else {
     Serial.println("WICS configuration WiFi CLOSED. (wifi=off in wifi.txt)");
   }
   
-  // ==========================
+    // ==========================
   // Check & Load Configuration
   // ==========================
   if (!loadConfigWithRetry()) {
-    logConfigError("Error: No configuration found. System on Hold!");
-    wStatusBlink(5, 50);
+    logConfigError("Error: No configuration found. System on Hold! REBOOT NEEDED!");
     
+    // Visual indication ERROR
+    wStatusBlink(5, 50);
+    // System on HOLD
     while (true) {
-      updateStatusBlink(); 
+      updateStatusBlink(); // Blink
       delay(1);
-      yield();             
+      yield();             // Watchdog-timern
     }
-  } else {
-    // Synchronize initial baseline track storage states
+  } 
+  else {
+    // Save the configuration file size 
     File file = LittleFS.open(CONFIG_FILE, "r");
     if (file) {
-      lastFileSize = file.size();
-      file.close();
+        lastFileSize = file.size();
+        file.close();
+    } else {
+        lastFileSize = 0;
     }
+    
+    // And timer (for the chech in loop)
+    lastCheckTime = millis();
   }
+
 
   // ========================
   // Success - WICS INI Done!
   // ========================
   Serial.println("--- WICS Init Done ---");
+  
+  // Visual indication OK
   wStatusBlink(2, 300);
   
-  // Non-blocking flush loop to output clean completion blink cycles
+  // Non blocking Wait for visual indication
   while (blinkRemaining > 0) {
     updateStatusBlink();
     delay(1);
@@ -719,20 +678,16 @@ void initWics() {
   }
 }
 
-// ==============================================
+/// ==============================================
 // ==============================================
 // WICS RUN FUNCTION (Loop) Called from nowRail
 // ==============================================
 // ==============================================
 void runWics() {
-  // Process incoming web clients if communication layer remains active
-  if (wifiStatus == "on") {
-    server.handleClient(); 
-  }
-  updateStatusBlink();    // Process ongoing system heartbeat flash tasks
-  checkConfigReload();    // Look for changes across storage file sectors
-  updateCustomHardware(); // Independently manages non-blocking frame interpolation for moving points
+  // Handle WEB requests
+      if (wifiStatus == "on") {
+      server.handleClient(); 
+    }
+  updateStatusBlink(); // If internal LED should blink 
+  checkConfigReload(); // Check if new config is uploaded
 }
-
-
-
