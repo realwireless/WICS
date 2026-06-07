@@ -1,7 +1,12 @@
-/*nowRailV2_0_1
-30/05/2026
+/*nowRailV2_1_0
+04/06/2026
 
 Additions
+2_1_0 ability to set custom SDA/SCL pins using
+#define CUSTOM_SDA 4 //SDA cutom pin number
+#define CUSTOM_SCL 5 //SCL custom pin number
+This allows the use os ESP32 C3 and S3 boards
+
 2.0.1
 nowChannelUpdate() in customFunctions.ino gives wifiChannelUpdate info
 2.0.0
@@ -39,8 +44,8 @@ SOFTWARE.
 nowRail myLayout(0x00, 0x01, 0x02, 0x03);
 
 // Non-nowRail function declarations so nowRail.ino can see them across tabs
-  extern void initWics();
-  extern void runWics();
+extern void initWics();
+extern void runWics();
 
 //NON Nowrail variables
 unsigned long currentMillis = millis();
@@ -50,11 +55,16 @@ void setup() {
   Serial.begin(115200);//Standard Serial Output to Serial monitor
   //Serial.begin(115200, SERIAL_8N2);//SERIAL_8N2 required if JMRICMRI connection
   Serial.println(F(__FILE__ " " __DATE__ " " __TIME__));  //File details
-
+  
   //Start the system
   myLayout.init();//This functions sets up ESP-NOW as well as other items needed for the system to run
   initWics(); // This function sets up WICS addOn for nowRail 
 }
+
+//unsigned long currentMillis;
+unsigned long timerMillis;
+uint16_t timerTime = 5000;
+byte timerState;
 
 void loop() {
   currentMillis = millis();

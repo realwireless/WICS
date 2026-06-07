@@ -1,5 +1,5 @@
-/*nowRailV2_0_0
-15/05/2026
+/*nowRailV2_1_0
+04/06/2026
   */
 
 #ifndef nowRail_h  //header guard to stop it being imported twice
@@ -242,6 +242,7 @@ public:
   void addPCA9685PanelLed(byte board, byte port, int accNum, int dirOn, int effect, int maxBright);  //panel led... efect on/off or flashing
   //1.9.3
   //void setPCA9685LEDOpenDrain(byte boardAddress);//sets board to open drain for leds
+  void setPCA695Servo(byte boardAddress, byte port, byte angle);
 #endif
 
 #if defined(MP3BUSYPIN)
@@ -343,7 +344,7 @@ private:
   int _pca9685ServoCount;
   void pca9685ServoControl();                                     //deals with servo movement in main loop
   void setupPCA9685Board(byte boardAddress, byte boardType);      //0_9_2 mods sets up servo boards, type 0 = servo, type 1 = led
-  void setPCA695Servo(byte boardAddress, byte port, byte angle);  //move servo to an angle
+  //void setPCA695Servo(byte boardAddress, byte port, byte angle);  //move servo to an angle
   //1.9.1 mod
   void detachPCA9685Servo(byte boardAddress, byte port);
   //0_9_2 LED mods

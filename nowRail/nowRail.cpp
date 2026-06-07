@@ -1,5 +1,5 @@
-/*nowRailV2_0_0
-15/05/2026
+/*nowRailV2_1_0
+04/06/2026
 */
 #include "Arduino.h"
 #include "nowRail.h"
@@ -46,22 +46,22 @@ void nowRail::addMP3PlayTrack(int accNum, int dirOn, int trackNum, int maxTrackN
 
 //delayed accessories
 #if defined(NUMDELAYEDACCS)
-  //uint8_t _DelayAccs[NUMDELAYEDACCS][7];  //TriggerAccNum,TriggerAccDir,DelaAccNum,DelayAccDir,DelayTime,Triggerstate,TriggerMillis
-  //int _DelayAccsCount;  
-  void nowRail::addDelayedAccTrigger(int triggerAccNum,byte triggerAccDir,int delayedAccNum,byte delayedAccDir,int delayTime){
-      
-    if (_DelayAccsCount < NUMDELAYEDACCS) {  //check that full number not used up
-     _DelayAccs[_DelayAccsCount][0] = triggerAccNum;
-     _DelayAccs[_DelayAccsCount][1] = triggerAccDir;
-     _DelayAccs[_DelayAccsCount][2] = delayedAccNum;
-     _DelayAccs[_DelayAccsCount][3] = delayedAccDir;
-     _DelayAccs[_DelayAccsCount][4] = delayTime;
-    
-     _DelayAccsCount++;
-    }else{
-      Serial.println("ERROR:addDelayedAccTrigger Too many delayed accessories added, increase the value of NUMDELAYEDACCS in nowrail_user_setup.h");  
-    }
+//uint8_t _DelayAccs[NUMDELAYEDACCS][7];  //TriggerAccNum,TriggerAccDir,DelaAccNum,DelayAccDir,DelayTime,Triggerstate,TriggerMillis
+//int _DelayAccsCount;
+void nowRail::addDelayedAccTrigger(int triggerAccNum, byte triggerAccDir, int delayedAccNum, byte delayedAccDir, int delayTime) {
+
+  if (_DelayAccsCount < NUMDELAYEDACCS) {  //check that full number not used up
+    _DelayAccs[_DelayAccsCount][0] = triggerAccNum;
+    _DelayAccs[_DelayAccsCount][1] = triggerAccDir;
+    _DelayAccs[_DelayAccsCount][2] = delayedAccNum;
+    _DelayAccs[_DelayAccsCount][3] = delayedAccDir;
+    _DelayAccs[_DelayAccsCount][4] = delayTime;
+
+    _DelayAccsCount++;
+  } else {
+    Serial.println("ERROR:addDelayedAccTrigger Too many delayed accessories added, increase the value of NUMDELAYEDACCS in nowrail_user_setup.h");
   }
+}
 #endif
 
 //1.4.2  only runs if WIFIMASTERCLOCKCHANGE defined
@@ -175,8 +175,12 @@ void nowRail::useEEPROM(byte discAddress) {  //sets up system to use EEPROM for 
   byte myByte;
   byte byteArray[32];
   int junk;
-  Wire.begin();  //make sure wire is started
-  delay(10);
+#if defined(CUSTOM_SDA)
+  Wire.begin(CUSTOM_SDA, CUSTOM_SCL);  //custom pins
+#else
+  Wire.begin();        //standard pins
+#endif
+  delay(100);
 
   q = 0;
   Serial.println("Read Wire");
@@ -423,35 +427,7 @@ void nowRail::EEPROMWrite(int disk, int eepromaddress, byte eepromdata) {
 
 
 #if defined(MAXPCA9685SERVOBOARDS)
-// void nowRail::setPCA9685LEDOpenDrain(byte boardAddress){
-//   int error;
-//   Wire.beginTransmission(boardAddress);
-//   Wire.write(0x01);
-//   Wire.endTransmission();
 
-//   Wire.requestFrom(boardAddress, 1); // Request 1 byte
-//   if (Wire.available()) {
-//     byte mode2 = Wire.read();
-//     Serial.print("Register: 0x");
-//     Serial.println(mode2, HEX);
-//   }
-//     Wire.beginTransmission(boardAddress);  //Start transmissions to board
-//     //uint8_t oldmode = read8(PCA9685_MODE2);
-//     Wire.write(0x01);            //Mode 2 address
-//     Wire.write(0x00);            //Open Drain and invert
-//     error = Wire.endTransmission();
-
-//   Wire.beginTransmission(boardAddress);
-//   Wire.write(0x01);
-//   Wire.endTransmission();
-
-//   Wire.requestFrom(boardAddress, 1); // Request 1 byte
-//   if (Wire.available()) {
-//     byte mode2 = Wire.read();
-//     Serial.print("Register: 0x");
-//     Serial.println(mode2, HEX);
-//   }
-// }
 
 //function to set led brightness..TOWRITE
 void nowRail::setPCA695Led(byte boardAddress, byte port, int brightness) {
@@ -625,8 +601,12 @@ void nowRail::addPCA9685PanelLed(byte board, byte port, int accNum, int dirOn, i
       _pca9685Addresses[_pca9685AddressesCount][1] = 1;
       //now set it up as a servo board
       if (_pca9685AddressesCount < 1) {
-        Wire.begin();
-        delay(200);  //won't matter in start up, allow wire to get started
+#if defined(CUSTOM_SDA)
+        Wire.begin(CUSTOM_SDA, CUSTOM_SCL);  //custom pins
+#else
+        Wire.begin();  //standard pins
+#endif
+        delay(100);
       }
       nowRail::setupPCA9685Board(_pca9685Addresses[_pca9685AddressesCount][0], _pca9685Addresses[_pca9685AddressesCount][1]);  //0_9_2 mod
       _pca9685AddressesCount++;
@@ -659,7 +639,7 @@ void nowRail::addPCA9685Led(byte board, byte port, int accNum, int dirOn, int ef
   _pca9685LEDS[_pca9685LEDCount][6] = effectBright;
 
   //_pca9685LEDStates[_pca9685LEDCount][0] = 0;
-  //nowRail::setPCA695Led(_pca9685LEDS[q][0], _pca9685LEDS[q][1], 0); 
+  //nowRail::setPCA695Led(_pca9685LEDS[q][0], _pca9685LEDS[q][1], 0);
 
   if (port < 0 || port > 15) {
     Serial.println("ERROR:addPCA9685Led invalid port address");
@@ -686,8 +666,12 @@ void nowRail::addPCA9685Led(byte board, byte port, int accNum, int dirOn, int ef
       _pca9685Addresses[_pca9685AddressesCount][1] = 1;
       //now set it up as a servo board
       if (_pca9685AddressesCount < 1) {
-        Wire.begin();
-        delay(200);  //won't matter in start up, allow wire to get started
+#if defined(CUSTOM_SDA)
+        Wire.begin(CUSTOM_SDA, CUSTOM_SCL);  //custom pins
+#else
+        Wire.begin();  //standard pins
+#endif
+        delay(100);
       }
       nowRail::setupPCA9685Board(_pca9685Addresses[_pca9685AddressesCount][0], _pca9685Addresses[_pca9685AddressesCount][1]);  //0_9_2 mod
       _pca9685AddressesCount++;
@@ -699,7 +683,7 @@ void nowRail::addPCA9685Led(byte board, byte port, int accNum, int dirOn, int ef
   if (validLed < 1) {
     _pca9685LEDStates[_pca9685LEDCount][0] = 255;  //set to an unset value so whatevr trigger it responds
     _pca9685LEDStates[_pca9685LEDCount][1] = 255;  //set to an unset value so whatevr trigger it responds
-   // nowRail::setPCA695Led(_pca9685LEDS[_pca9685LEDCount][0], _pca9685LEDS[_pca9685LEDCount][1], 0); 
+                                                   // nowRail::setPCA695Led(_pca9685LEDS[_pca9685LEDCount][0], _pca9685LEDS[_pca9685LEDCount][1], 0);
     _pca9685LEDCount++;
   }
 }
@@ -765,8 +749,12 @@ void nowRail::addPCA9685Servo(byte board, byte port, int accNum, int angle0, int
       _pca9685Addresses[_pca9685AddressesCount][1] = 0;
       //now set it up as a servo board
       if (_pca9685AddressesCount < 1) {
-        Wire.begin();
-        delay(200);  //won't matter in start up, allow wire to get started
+#if defined(CUSTOM_SDA)
+        Wire.begin(CUSTOM_SDA, CUSTOM_SCL);  //custom pins
+#else
+        Wire.begin();  //standard pins
+#endif
+        delay(100);
       }
       nowRail::setupPCA9685Board(_pca9685Addresses[_pca9685AddressesCount][0], _pca9685Addresses[_pca9685AddressesCount][1]);  //0_9_2 mod
       _pca9685AddressesCount++;
@@ -834,7 +822,7 @@ void nowRail::pca9685ServoControl() {
 //version 2 sends 4096...OFF OFF
 void nowRail::detachPCA9685Servo(byte boardAddress, byte port) {
   if (port < 16) {
-    int sendPulse = 4096;
+    uint16_t sendPulse = 4096;
     Wire.beginTransmission(boardAddress);  //Start transmissions to board
     Wire.write((port * 4) + 6);            //6 = port 0.............               sets the start transmission address
     Wire.write(0x00);                      //pulse start time..using fixed on time... writes date to addrsss and increments...start time low byte
@@ -848,19 +836,26 @@ void nowRail::detachPCA9685Servo(byte boardAddress, byte port) {
 }
 
 void nowRail::setPCA695Servo(byte boardAddress, byte port, byte angle) {  //addr = PCA9685 address 0x40, byte port 0-15, int angle...angle to set servo to
-  int sendPulse;                                                          //pulse to send to board
-  int error;                                                              //stores return value if you want to test it.
+  //int sendPulse;
+  uint16_t sendPulse;  //pulse to send to board
+  int error;           //stores return value if you want to test it.
   if (port < 16) {
     if (angle > 179) {  //don't allow out of range angles
       angle = 179;
     }
     sendPulse = map(angle, 0, 179, SERVOMIN, SERVOMAX);
+    //testing
+    // if(angle < 90){
+    //   sendPulse = 800;
+    // }else{
+    //   sendPulse = 1500;
+    // }
     //Serial.println(sendPulse);
     Wire.beginTransmission(boardAddress);  //Start transmissions to board
     Wire.write((port * 4) + 6);            //6 = port 0.............               sets the start transmission address
     Wire.write(0x00);                      //pulse start time..using fixed on time... writes date to addrsss and increments...start time low byte
     Wire.write(0x00);                      //pulse start time                         writes date to addrsss and increments.... high byte...both zero in this example
-    Wire.write(byte(sendPulse));           //value between 0 and 4095..writes date to addrsss and increments...finish time low byte
+    Wire.write(byte(sendPulse));           //value between 0 and 4095..writes date to address and increments...finish time low byte
     Wire.write(byte(sendPulse >> 8));      //high byte              writes date to addrsss and increments...finish time high byte byte
     error = Wire.endTransmission();        //end transmission, check if any errores occured with the writes...0 = good news.
     //Serial.println(error);//print return value 0 = OK
@@ -895,7 +890,8 @@ void nowRail::setupPCA9685Board(byte boardAddress, byte boardType) {  //board ty
   } else {
     reqHZ = pca9685LedFreq;  //led freq
   }
-  int preScale = 25000000 / (4096 * reqHZ) - 1;
+  //int preScale = 25000000 / (4096 * reqHZ) - 1;
+  int preScale = 27000000 / (4096 * reqHZ) - 1;
   if (preScale < 3) {  //Min prescale value
     preScale = 3;
   }
@@ -918,16 +914,16 @@ void nowRail::setupPCA9685Board(byte boardAddress, byte boardType) {  //board ty
   Wire.write(0xFE);                      //the address on the board to write to...MODE Register 1
   Wire.write(preScale);                  //sets auto increment to next location...0x21 = 00100001  bit 5 set to 1 = auto increment bit 0 = 1 responds to all led call
   error = Wire.endTransmission();
-  Serial.print("prescale: ");
+  Serial.print("error State: ");
   Serial.println(error);
 #if defined(PCA9685LEDOPENDRAIN)
-   if(boardType > 0){//leds... only do this for leds boards
-     Wire.beginTransmission(boardAddress);  //Start transmissions to board
-     //uint8_t oldmode = read8(PCA9685_MODE2);
-     Wire.write(0x01);            //Mode 2 address
-     //Wire.write(0x00);            //Open Drain and invert = 10000 0x10
-     Wire.write(0x10); //Drain plus inverts signal    
-     error = Wire.endTransmission();
+  if (boardType > 0) {                     //leds... only do this for leds boards
+    Wire.beginTransmission(boardAddress);  //Start transmissions to board
+    //uint8_t oldmode = read8(PCA9685_MODE2);
+    Wire.write(0x01);  //Mode 2 address
+    //Wire.write(0x00);            //Open Drain and invert = 10000 0x10
+    Wire.write(0x10);  //Drain plus inverts signal
+    error = Wire.endTransmission();
   }
 #endif
   //return board to awake and the state I want.
@@ -1665,7 +1661,7 @@ void nowRail::checkRecFifo(void) {
 
 
 
-//#endif         // end if for #if defined(ESP32)
+              //#endif         // end if for #if defined(ESP32)
             }  //end of if acc below 2001
             //             //call the accessory command function
             //
@@ -1777,23 +1773,23 @@ void nowRail::checkRecFifo(void) {
 #endif
 //Delayed accessory trigger system
 #if defined(NUMDELAYEDACCS)
-  //uint8_t _DelayAccs[NUMDELAYEDACCS][7];  //TriggerAccNum,TriggerAccDir,DelaAccNum,DelayAccDir,DelayTime,Triggerstate,TriggerMillis
-  //int _DelayAccsCount;  
-  //void addDelayedAccTrigger(int triggerAccNum,byte triggerAccDir,int delayedAccNum,byte delayedAccDir,int delayTime);
+            //uint8_t _DelayAccs[NUMDELAYEDACCS][7];  //TriggerAccNum,TriggerAccDir,DelaAccNum,DelayAccDir,DelayTime,Triggerstate,TriggerMillis
+            //int _DelayAccsCount;
+            //void addDelayedAccTrigger(int triggerAccNum,byte triggerAccDir,int delayedAccNum,byte delayedAccDir,int delayTime);
 
-  //The first part is to see if an accessory command coming through should trigger some timed events
-  //Work thorugh the array, check for matching triggerAccNum and TriggerAccDir
-  //This then sets their start time for triggering later
-  for(q=0;q<_DelayAccsCount;q++){
-    //work through all the triggers
-    //Serial.println(q);
-    
-    if(_DelayAccs[q][0] == accNum && _DelayAccs[q][1] == accInst){
-      _accMoved = 1;//if it is found set the acc response
-      _DelayAccs[q][5] = 1;   //Set TriggerState 
-      _DelayAccs[q][6] = _currentMillis;   //TriggerMillis
-    }
-  }
+            //The first part is to see if an accessory command coming through should trigger some timed events
+            //Work thorugh the array, check for matching triggerAccNum and TriggerAccDir
+            //This then sets their start time for triggering later
+            for (q = 0; q < _DelayAccsCount; q++) {
+              //work through all the triggers
+              //Serial.println(q);
+
+              if (_DelayAccs[q][0] == accNum && _DelayAccs[q][1] == accInst) {
+                _accMoved = 1;                      //if it is found set the acc response
+                _DelayAccs[q][5] = 1;               //Set TriggerState
+                _DelayAccs[q][6] = _currentMillis;  //TriggerMillis
+              }
+            }
 #endif  //#if defined(NUMDELAYEDACCS)
 
             if (_accMoved > 0) {  //did I process this instruction? 1 = yes
@@ -2156,11 +2152,11 @@ void nowRail::checkRecFifo(void) {
             break;
           case WIFICHANNELCMD:  //11 transmission of all locos data
             byte newWifiChannel;
-            
+
 #if defined(WIFIMASTERCLOCKCHANGE)  //code only runs if enabled
             newWifiChannel = recFifoBuffer[recReadFifoCounter][NEWWIFICHANNEL];
-            nowChannelUpdate(newWifiChannel, 0); //2.0.1 update
-#if defined(MASTERCLOCK_ON)         //code only runs if enabled
+            nowChannelUpdate(newWifiChannel, 0);  //2.0.1 update
+#if defined(MASTERCLOCK_ON)                       //code only runs if enabled
             //newWifiChannel = recFifoBuffer[recReadFifoCounter][NEWWIFICHANNEL];
             WiFi.setChannel(newWifiChannel);
 #endif
@@ -2247,8 +2243,8 @@ void nowRail::checkRecFifo(void) {
             consistAddress = (recFifoBuffer[recReadFifoCounter][CONSISTADDRHIGH] * 256) + recFifoBuffer[recReadFifoCounter][CONSISTADDRLOW];
             Serial.print("M Con addr: ");
             Serial.println(consistAddress);
-            for(q=0;q<10;q++){
-              consistLocoArray[q] = (recFifoBuffer[recReadFifoCounter][19 + (2*q)] * 256) + recFifoBuffer[recReadFifoCounter][20 + (2*q)];
+            for (q = 0; q < 10; q++) {
+              consistLocoArray[q] = (recFifoBuffer[recReadFifoCounter][19 + (2 * q)] * 256) + recFifoBuffer[recReadFifoCounter][20 + (2 * q)];
               Serial.println(consistLocoArray[q]);
             }
             //all values correct
@@ -2256,8 +2252,8 @@ void nowRail::checkRecFifo(void) {
 //DCC EX / EX RAIL consist
 #if defined(DCCEXSSERIAL2_ON)
             DCCString = "<^";
-            for(q=0;q<numCLocos;q++){
-              DCCString = DCCString + ' ' + String(consistLocoArray[q]); 
+            for (q = 0; q < numCLocos; q++) {
+              DCCString = DCCString + ' ' + String(consistLocoArray[q]);
             }
             DCCString = DCCString + " >";
             Serial2.println(DCCString);
@@ -2265,91 +2261,91 @@ void nowRail::checkRecFifo(void) {
 #if defined(DCCEXSERIAL_ON)  //SEND the command over Serial
             Serial.println(DCCString);
 #endif
-//NCE CAB BUS consist NOT WORKING YET
-/* Method
+            //NCE CAB BUS consist NOT WORKING YET
+            /* Method
 A loco is set to the current loco in use and then added to the consist but each loco needs to be set to current loco
 */
-// #if defined(CAB_BUS_ADDRESS)
+            // #if defined(CAB_BUS_ADDRESS)
 
-// //set consist address as lead loco
-// _nceCommandBytes[_nceCommandBytesWrite][0] = consistLocoArray[0] >> 8;
-// _nceCommandBytes[_nceCommandBytesWrite][1] = consistLocoArray[0];//
-// _nceCommandBytes[_nceCommandBytesWrite][2] = 0x00;  //make current loco
-// _nceCommandBytes[_nceCommandBytesWrite][3] = 0x00; //make current loco
-// _nceCommandBytes[_nceCommandBytesWrite][4] = _nceCommandBytes[_nceCommandBytesWrite][0] ^ _nceCommandBytes[_nceCommandBytesWrite][1] ^ _nceCommandBytes[_nceCommandBytesWrite][2] ^ _nceCommandBytes[_nceCommandBytesWrite][3];
-// _nceCommandBytesWrite++;
-// //lead loco
-// _nceCommandBytes[_nceCommandBytesWrite][0] = consistLocoArray[0] >> 8;  //loco address high byte
-// _nceCommandBytes[_nceCommandBytesWrite][1] = consistLocoArray[0];       //loco address low byte
-// _nceCommandBytes[_nceCommandBytesWrite][2] = 0x0b;  //forward lead loco
-// _nceCommandBytes[_nceCommandBytesWrite][3] = consistAddress; //consist address
-// _nceCommandBytes[_nceCommandBytesWrite][4] = _nceCommandBytes[_nceCommandBytesWrite][0] ^ _nceCommandBytes[_nceCommandBytesWrite][1] ^ _nceCommandBytes[_nceCommandBytesWrite][2] ^ _nceCommandBytes[_nceCommandBytesWrite][3];
-// _nceCommandBytesWrite++;
-// //centre locos
-// int16_t consLoco;
+            // //set consist address as lead loco
+            // _nceCommandBytes[_nceCommandBytesWrite][0] = consistLocoArray[0] >> 8;
+            // _nceCommandBytes[_nceCommandBytesWrite][1] = consistLocoArray[0];//
+            // _nceCommandBytes[_nceCommandBytesWrite][2] = 0x00;  //make current loco
+            // _nceCommandBytes[_nceCommandBytesWrite][3] = 0x00; //make current loco
+            // _nceCommandBytes[_nceCommandBytesWrite][4] = _nceCommandBytes[_nceCommandBytesWrite][0] ^ _nceCommandBytes[_nceCommandBytesWrite][1] ^ _nceCommandBytes[_nceCommandBytesWrite][2] ^ _nceCommandBytes[_nceCommandBytesWrite][3];
+            // _nceCommandBytesWrite++;
+            // //lead loco
+            // _nceCommandBytes[_nceCommandBytesWrite][0] = consistLocoArray[0] >> 8;  //loco address high byte
+            // _nceCommandBytes[_nceCommandBytesWrite][1] = consistLocoArray[0];       //loco address low byte
+            // _nceCommandBytes[_nceCommandBytesWrite][2] = 0x0b;  //forward lead loco
+            // _nceCommandBytes[_nceCommandBytesWrite][3] = consistAddress; //consist address
+            // _nceCommandBytes[_nceCommandBytesWrite][4] = _nceCommandBytes[_nceCommandBytesWrite][0] ^ _nceCommandBytes[_nceCommandBytesWrite][1] ^ _nceCommandBytes[_nceCommandBytesWrite][2] ^ _nceCommandBytes[_nceCommandBytesWrite][3];
+            // _nceCommandBytesWrite++;
+            // //centre locos
+            // int16_t consLoco;
 
-// for(q=1;q<(numCLocos - 1);q++){//last loco is the rear loco
-//   if(consistLocoArray[q] < 0){
-//     consLoco = consistLocoArray[q] * -1;//make positive  
-//   }else{
-//     consLoco = consistLocoArray[q]; 
-//   }
-//   Serial.println(consistLocoArray[q]);
-//   Serial.println(consLoco);
-//   _nceCommandBytes[_nceCommandBytesWrite][0] = consLoco >> 8;
-//   _nceCommandBytes[_nceCommandBytesWrite][1] = consLoco;//
-//   _nceCommandBytes[_nceCommandBytesWrite][2] = 0x00;  //make current loco
-//   _nceCommandBytes[_nceCommandBytesWrite][3] = 0x00; //make current loco
-//   _nceCommandBytes[_nceCommandBytesWrite][4] = _nceCommandBytes[_nceCommandBytesWrite][0] ^ _nceCommandBytes[_nceCommandBytesWrite][1] ^ _nceCommandBytes[_nceCommandBytesWrite][2] ^ _nceCommandBytes[_nceCommandBytesWrite][3];
-//   _nceCommandBytesWrite++;
+            // for(q=1;q<(numCLocos - 1);q++){//last loco is the rear loco
+            //   if(consistLocoArray[q] < 0){
+            //     consLoco = consistLocoArray[q] * -1;//make positive
+            //   }else{
+            //     consLoco = consistLocoArray[q];
+            //   }
+            //   Serial.println(consistLocoArray[q]);
+            //   Serial.println(consLoco);
+            //   _nceCommandBytes[_nceCommandBytesWrite][0] = consLoco >> 8;
+            //   _nceCommandBytes[_nceCommandBytesWrite][1] = consLoco;//
+            //   _nceCommandBytes[_nceCommandBytesWrite][2] = 0x00;  //make current loco
+            //   _nceCommandBytes[_nceCommandBytesWrite][3] = 0x00; //make current loco
+            //   _nceCommandBytes[_nceCommandBytesWrite][4] = _nceCommandBytes[_nceCommandBytesWrite][0] ^ _nceCommandBytes[_nceCommandBytesWrite][1] ^ _nceCommandBytes[_nceCommandBytesWrite][2] ^ _nceCommandBytes[_nceCommandBytesWrite][3];
+            //   _nceCommandBytesWrite++;
 
-//   _nceCommandBytes[_nceCommandBytesWrite][0] = consLoco >> 8;  //loco address high byte
-//   _nceCommandBytes[_nceCommandBytesWrite][1] = consLoco;       //loco address low byte
-//   if(consistLocoArray[q] < 0){
-//     _nceCommandBytes[_nceCommandBytesWrite][2] = 0x0e;  //reverse consist loco  
-//   }else{
-//     _nceCommandBytes[_nceCommandBytesWrite][2] = 0x0f;  //forward consist loco; 
-//   }
-//   _nceCommandBytes[_nceCommandBytesWrite][3] = consistAddress; //consist address
-//   _nceCommandBytes[_nceCommandBytesWrite][4] = _nceCommandBytes[_nceCommandBytesWrite][0] ^ _nceCommandBytes[_nceCommandBytesWrite][1] ^ _nceCommandBytes[_nceCommandBytesWrite][2] ^ _nceCommandBytes[_nceCommandBytesWrite][3];
-//   _nceCommandBytesWrite++;
-// }
-// //now for the rear loco
-// Serial.println("Last Loco");
-// if(consistLocoArray[numCLocos - 1] < 0){
-//     consLoco = consistLocoArray[numCLocos - 1] * -1;//make positive  
-//   }else{
-//     consLoco = consistLocoArray[numCLocos - 1]; 
-//   }
-//   Serial.println(consistLocoArray[q]);
-//   Serial.println(consLoco);
-//   _nceCommandBytes[_nceCommandBytesWrite][0] = consLoco >> 8;
-//   _nceCommandBytes[_nceCommandBytesWrite][1] = consLoco;//
-//   _nceCommandBytes[_nceCommandBytesWrite][2] = 0x00;  //make current loco
-//   _nceCommandBytes[_nceCommandBytesWrite][3] = 0x00; //make current loco
-//   _nceCommandBytes[_nceCommandBytesWrite][4] = _nceCommandBytes[_nceCommandBytesWrite][0] ^ _nceCommandBytes[_nceCommandBytesWrite][1] ^ _nceCommandBytes[_nceCommandBytesWrite][2] ^ _nceCommandBytes[_nceCommandBytesWrite][3];
-//   _nceCommandBytesWrite++;
+            //   _nceCommandBytes[_nceCommandBytesWrite][0] = consLoco >> 8;  //loco address high byte
+            //   _nceCommandBytes[_nceCommandBytesWrite][1] = consLoco;       //loco address low byte
+            //   if(consistLocoArray[q] < 0){
+            //     _nceCommandBytes[_nceCommandBytesWrite][2] = 0x0e;  //reverse consist loco
+            //   }else{
+            //     _nceCommandBytes[_nceCommandBytesWrite][2] = 0x0f;  //forward consist loco;
+            //   }
+            //   _nceCommandBytes[_nceCommandBytesWrite][3] = consistAddress; //consist address
+            //   _nceCommandBytes[_nceCommandBytesWrite][4] = _nceCommandBytes[_nceCommandBytesWrite][0] ^ _nceCommandBytes[_nceCommandBytesWrite][1] ^ _nceCommandBytes[_nceCommandBytesWrite][2] ^ _nceCommandBytes[_nceCommandBytesWrite][3];
+            //   _nceCommandBytesWrite++;
+            // }
+            // //now for the rear loco
+            // Serial.println("Last Loco");
+            // if(consistLocoArray[numCLocos - 1] < 0){
+            //     consLoco = consistLocoArray[numCLocos - 1] * -1;//make positive
+            //   }else{
+            //     consLoco = consistLocoArray[numCLocos - 1];
+            //   }
+            //   Serial.println(consistLocoArray[q]);
+            //   Serial.println(consLoco);
+            //   _nceCommandBytes[_nceCommandBytesWrite][0] = consLoco >> 8;
+            //   _nceCommandBytes[_nceCommandBytesWrite][1] = consLoco;//
+            //   _nceCommandBytes[_nceCommandBytesWrite][2] = 0x00;  //make current loco
+            //   _nceCommandBytes[_nceCommandBytesWrite][3] = 0x00; //make current loco
+            //   _nceCommandBytes[_nceCommandBytesWrite][4] = _nceCommandBytes[_nceCommandBytesWrite][0] ^ _nceCommandBytes[_nceCommandBytesWrite][1] ^ _nceCommandBytes[_nceCommandBytesWrite][2] ^ _nceCommandBytes[_nceCommandBytesWrite][3];
+            //   _nceCommandBytesWrite++;
 
-//   _nceCommandBytes[_nceCommandBytesWrite][0] = consLoco >> 8;  //loco address high byte
-//   _nceCommandBytes[_nceCommandBytesWrite][1] = consLoco;       //loco address low byte
-//   if(consistLocoArray[numCLocos - 1] < 0){
-//     _nceCommandBytes[_nceCommandBytesWrite][2] = 0x0c;  //reverse rear consist loco  
-//   }else{
-//     _nceCommandBytes[_nceCommandBytesWrite][2] = 0x0d;  //forward rear consist loco; 
-//   }
-//   _nceCommandBytes[_nceCommandBytesWrite][3] = consistAddress; //consist address
-//   _nceCommandBytes[_nceCommandBytesWrite][4] = _nceCommandBytes[_nceCommandBytesWrite][0] ^ _nceCommandBytes[_nceCommandBytesWrite][1] ^ _nceCommandBytes[_nceCommandBytesWrite][2] ^ _nceCommandBytes[_nceCommandBytesWrite][3];
-//   _nceCommandBytesWrite++;
+            //   _nceCommandBytes[_nceCommandBytesWrite][0] = consLoco >> 8;  //loco address high byte
+            //   _nceCommandBytes[_nceCommandBytesWrite][1] = consLoco;       //loco address low byte
+            //   if(consistLocoArray[numCLocos - 1] < 0){
+            //     _nceCommandBytes[_nceCommandBytesWrite][2] = 0x0c;  //reverse rear consist loco
+            //   }else{
+            //     _nceCommandBytes[_nceCommandBytesWrite][2] = 0x0d;  //forward rear consist loco;
+            //   }
+            //   _nceCommandBytes[_nceCommandBytesWrite][3] = consistAddress; //consist address
+            //   _nceCommandBytes[_nceCommandBytesWrite][4] = _nceCommandBytes[_nceCommandBytesWrite][0] ^ _nceCommandBytes[_nceCommandBytesWrite][1] ^ _nceCommandBytes[_nceCommandBytesWrite][2] ^ _nceCommandBytes[_nceCommandBytesWrite][3];
+            //   _nceCommandBytesWrite++;
 
-// //make 1st loco current again
-// _nceCommandBytes[_nceCommandBytesWrite][0] = consistLocoArray[0] >> 8;
-// _nceCommandBytes[_nceCommandBytesWrite][1] = consistLocoArray[0];//
-// _nceCommandBytes[_nceCommandBytesWrite][2] = 0x00;  //make current loco
-// _nceCommandBytes[_nceCommandBytesWrite][3] = 0x00; //make current loco
-// _nceCommandBytes[_nceCommandBytesWrite][4] = _nceCommandBytes[_nceCommandBytesWrite][0] ^ _nceCommandBytes[_nceCommandBytesWrite][1] ^ _nceCommandBytes[_nceCommandBytesWrite][2] ^ _nceCommandBytes[_nceCommandBytesWrite][3];
-// _nceCommandBytesWrite++;
+            // //make 1st loco current again
+            // _nceCommandBytes[_nceCommandBytesWrite][0] = consistLocoArray[0] >> 8;
+            // _nceCommandBytes[_nceCommandBytesWrite][1] = consistLocoArray[0];//
+            // _nceCommandBytes[_nceCommandBytesWrite][2] = 0x00;  //make current loco
+            // _nceCommandBytes[_nceCommandBytesWrite][3] = 0x00; //make current loco
+            // _nceCommandBytes[_nceCommandBytesWrite][4] = _nceCommandBytes[_nceCommandBytesWrite][0] ^ _nceCommandBytes[_nceCommandBytesWrite][1] ^ _nceCommandBytes[_nceCommandBytesWrite][2] ^ _nceCommandBytes[_nceCommandBytesWrite][3];
+            // _nceCommandBytesWrite++;
 
-// #endif
+            // #endif
             break;
           case UNSETCONSIST:  //unset a consist either with EX RAIL or CAB BUS
 
@@ -2359,33 +2355,33 @@ A loco is set to the current loco in use and then added to the consist but each 
             //All values correct
             //DCC EX string
             //Serial2.println("<a " + String(boardaddress) + " " + String(boardindex) + " " + String(accInst) + " >");
-#if defined(DCCEXSSERIAL2_ON)            
+#if defined(DCCEXSSERIAL2_ON)
             DCCString = "<^ " + String(consistAddress) + '>';
             Serial2.println(DCCString);
-#endif 
+#endif
 #if defined(DCCEXSERIAL_ON)  //SEND the command over Serial
             Serial.println(DCCString);
 #endif
-// #if defined(CAB_BUS_ADDRESS)
-//             //ste lead loco as current
-            
-//             _nceCommandBytes[_nceCommandBytesWrite][0] = consistLocoArray[0] >> 8;
-//             _nceCommandBytes[_nceCommandBytesWrite][1] = consistLocoArray[0];//
-//             _nceCommandBytes[_nceCommandBytesWrite][2] = 0x00;  //make current loco
-//             _nceCommandBytes[_nceCommandBytesWrite][3] = 0x00; //make current loco
-//             _nceCommandBytes[_nceCommandBytesWrite][4] = _nceCommandBytes[_nceCommandBytesWrite][0] ^ _nceCommandBytes[_nceCommandBytesWrite][1] ^ _nceCommandBytes[_nceCommandBytesWrite][2] ^ _nceCommandBytes[_nceCommandBytesWrite][3];
-//             _nceCommandBytesWrite++;
-//             //kill consist
-//              _nceCommandBytes[_nceCommandBytesWrite][0] = consistLocoArray[0] >> 8;
-//             _nceCommandBytes[_nceCommandBytesWrite][1] = consistLocoArray[0];//
-//             _nceCommandBytes[_nceCommandBytesWrite][2] = 0x11;  //Kill consist
-//             _nceCommandBytes[_nceCommandBytesWrite][3] = consistAddress; //consist address
-//             _nceCommandBytes[_nceCommandBytesWrite][4] = _nceCommandBytes[_nceCommandBytesWrite][0] ^ _nceCommandBytes[_nceCommandBytesWrite][1] ^ _nceCommandBytes[_nceCommandBytesWrite][2] ^ _nceCommandBytes[_nceCommandBytesWrite][3];
-//             _nceCommandBytesWrite++;
-            
+            // #if defined(CAB_BUS_ADDRESS)
+            //             //ste lead loco as current
+
+            //             _nceCommandBytes[_nceCommandBytesWrite][0] = consistLocoArray[0] >> 8;
+            //             _nceCommandBytes[_nceCommandBytesWrite][1] = consistLocoArray[0];//
+            //             _nceCommandBytes[_nceCommandBytesWrite][2] = 0x00;  //make current loco
+            //             _nceCommandBytes[_nceCommandBytesWrite][3] = 0x00; //make current loco
+            //             _nceCommandBytes[_nceCommandBytesWrite][4] = _nceCommandBytes[_nceCommandBytesWrite][0] ^ _nceCommandBytes[_nceCommandBytesWrite][1] ^ _nceCommandBytes[_nceCommandBytesWrite][2] ^ _nceCommandBytes[_nceCommandBytesWrite][3];
+            //             _nceCommandBytesWrite++;
+            //             //kill consist
+            //              _nceCommandBytes[_nceCommandBytesWrite][0] = consistLocoArray[0] >> 8;
+            //             _nceCommandBytes[_nceCommandBytesWrite][1] = consistLocoArray[0];//
+            //             _nceCommandBytes[_nceCommandBytesWrite][2] = 0x11;  //Kill consist
+            //             _nceCommandBytes[_nceCommandBytesWrite][3] = consistAddress; //consist address
+            //             _nceCommandBytes[_nceCommandBytesWrite][4] = _nceCommandBytes[_nceCommandBytesWrite][0] ^ _nceCommandBytes[_nceCommandBytesWrite][1] ^ _nceCommandBytes[_nceCommandBytesWrite][2] ^ _nceCommandBytes[_nceCommandBytesWrite][3];
+            //             _nceCommandBytesWrite++;
 
 
-// #endif
+
+            // #endif
             break;
 
           default:
@@ -2475,7 +2471,7 @@ void nowRail::checkSendFifo(void) {
     memcpy(recFifoBuffer[recWriteFifoCounter], sendFifoBuffer[sendReadFifoCounter], PACKETLENGTH);
     recWriteFifoCounter++;
     //end feature
-//Now send
+    //Now send
     //The data isn't copied into a structure, it's transmitted straight from the sendFifiBuffer
 
     esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *)&sendFifoBuffer[sendReadFifoCounter], PACKETLENGTH);
@@ -2530,7 +2526,7 @@ void nowRail::runLayout(void) {
         _currentWIFIChannel = 1;
         break;
     }
-    nowChannelUpdate(_currentWIFIChannel, 1);//2.0.1 update
+    nowChannelUpdate(_currentWIFIChannel, 1);  //2.0.1 update
     Serial.println("Looking for MASTERCLOCK... Is it turned on?");
     Serial.println("Is layout ID correct?");
     Serial.println("Layout ID :" + getnowRailAddr() + " Trying WiFi Channel: " + String(_currentWIFIChannel));
@@ -2561,19 +2557,18 @@ void nowRail::runLayout(void) {
 #if defined(MP3BUSYPIN)
   nowRail::mp3Control();
 #endif
-#if defined(NUMDELAYEDACCS)//delayed tasks
-//Now run though the array to check for any items that have been set up to trigger
-  for(int q=0;q<_DelayAccsCount;q++){
-    if(_DelayAccs[q][5] > 0){//does this have a trigger set
-      if(_currentMillis - _DelayAccs[q][6] >= _DelayAccs[q][4]){//if its waiting is it time yet
+#if defined(NUMDELAYEDACCS)  //delayed tasks \
+                             //Now run though the array to check for any items that have been set up to trigger
+  for (int q = 0; q < _DelayAccsCount; q++) {
+    if (_DelayAccs[q][5] > 0) {                                     //does this have a trigger set
+      if (_currentMillis - _DelayAccs[q][6] >= _DelayAccs[q][4]) {  //if its waiting is it time yet
         //if it's time
-        _DelayAccs[q][5] = 0; //Unset the trigger so it only fires once
-        nowRail::sendAccessoryCommand(_DelayAccs[q][2], _DelayAccs[q][3], MESSRESPREQ);//send out accessory command
+        _DelayAccs[q][5] = 0;                                                            //Unset the trigger so it only fires once
+        nowRail::sendAccessoryCommand(_DelayAccs[q][2], _DelayAccs[q][3], MESSRESPREQ);  //send out accessory command
       }
     }
   }
 #endif
-
 }
 
 // //Initialisastion routine...sets up ESP-NOW and other initialisation items
@@ -2887,8 +2882,12 @@ void nowRail::addGT911Screen(int GT911ResetPin, int GT911IntPin) {
   _GT911_INT = GT911IntPin;      //CTP  INT
   _addr = GT911;
   uint8_t re = 0;
-  Wire.begin();
-  delay(250);
+#if defined(CUSTOM_SDA)
+  Wire.begin(CUSTOM_SDA, CUSTOM_SCL);  //custom pins
+#else
+  Wire.begin();        //standard pins
+#endif
+  delay(100);
   pinMode(_GT911_RESET, OUTPUT);
   pinMode(_GT911_INT, OUTPUT);
   digitalWrite(_GT911_RESET, LOW);
@@ -3435,42 +3434,41 @@ void nowRail::nceProcess() {
       bitClear(polledCab, 7);              //Get the cab number polled
       if (polledCab == CAB_BUS_ADDRESS) {  //for this cab...send any outstanding bytes
         //Serial.println("poll");
-      if(_currentMillis - _messageDelayMillis >= _messageDelayTimer){//1.9.2...timer to test consist issues
-        _messageDelayMillis = _currentMillis;
-        if(_messageDelayTimer > 0){
-        Serial.println(_currentMillis);
-        Serial.println(_messageDelayMillis);
-        Serial.println(_messageDelayTimer);
-        }
-        if (_nceCommandBytesRead != _nceCommandBytesWrite) {  //0.8.2
-          delayMicroseconds(transmitTimer);
-          digitalWrite(RS485ENABLLEPIN, HIGH);
-
-          Serial2.write(_nceCommandBytes[_nceCommandBytesRead], 5);  //send the command
-          Serial2.flush();
-          digitalWrite(RS485ENABLLEPIN, LOW);
-
-          if(_nceCommandBytes[_nceCommandBytesRead][2] > 0x09 && _nceCommandBytes[_nceCommandBytesRead][2] < 0x12){
-            _messageDelayTimer = 1000;
-          }else{
-            _messageDelayTimer = 0; 
+        if (_currentMillis - _messageDelayMillis >= _messageDelayTimer) {  //1.9.2...timer to test consist issues
+          _messageDelayMillis = _currentMillis;
+          if (_messageDelayTimer > 0) {
+            Serial.println(_currentMillis);
+            Serial.println(_messageDelayMillis);
+            Serial.println(_messageDelayTimer);
           }
+          if (_nceCommandBytesRead != _nceCommandBytesWrite) {  //0.8.2
+            delayMicroseconds(transmitTimer);
+            digitalWrite(RS485ENABLLEPIN, HIGH);
+
+            Serial2.write(_nceCommandBytes[_nceCommandBytesRead], 5);  //send the command
+            Serial2.flush();
+            digitalWrite(RS485ENABLLEPIN, LOW);
+
+            if (_nceCommandBytes[_nceCommandBytesRead][2] > 0x09 && _nceCommandBytes[_nceCommandBytesRead][2] < 0x12) {
+              _messageDelayTimer = 1000;
+            } else {
+              _messageDelayTimer = 0;
+            }
 
 #if defined(DIAGNOSTICS_ON)  //stop it being repeated again as the send system will re add record
-          Serial.println("DIAG>NCE>Send");
-          for (q = 0; q < 5; q++) {
+            Serial.println("DIAG>NCE>Send");
+            for (q = 0; q < 5; q++) {
 
-            Serial.print(_nceCommandBytes[_nceCommandBytesRead][q], HEX);
-            Serial.print(" , ");
-          }
-          Serial.println(" ");
+              Serial.print(_nceCommandBytes[_nceCommandBytesRead][q], HEX);
+              Serial.print(" , ");
+            }
+            Serial.println(" ");
 
 #endif
-          _nceCommandBytesRead++;  //move to next read pos 0.8.2
-          //_sendNCEFlag = 0;  //reset for new instruction
-        }
-      }//end millis
-
+            _nceCommandBytesRead++;  //move to next read pos 0.8.2
+            //_sendNCEFlag = 0;  //reset for new instruction
+          }
+        }  //end millis
       }
     } else {  //not a cab poll
               //Serial.println(readByte,HEX);
@@ -3822,7 +3820,7 @@ void nowRail::endConsist(byte numCLocos, int16_t consistAddress, int16_t LeadLoc
   sendFifoBuffer[sendWriteFifoCounter][MESSAGELOWID] = sendWriteFifoCounter;       //MessageID
   sendFifoBuffer[sendWriteFifoCounter][MESSAGEHIGHID] = sendWriteHighFifoCounter;  //MessageID HIGH BYTE
   sendFifoBuffer[sendWriteFifoCounter][MESSRESPONSE] = MESSRESPNOTREQ;
-  sendFifoBuffer[sendWriteFifoCounter][MESSTRANSCOUNT] = 0;        //0 as new message
+  sendFifoBuffer[sendWriteFifoCounter][MESSTRANSCOUNT] = 0;          //0 as new message
   sendFifoBuffer[sendWriteFifoCounter][MESSAGETYPE] = UNSETCONSIST;  //UNset consist
   sendFifoBuffer[sendWriteFifoCounter][CONSISTNUMLOCOS] = numCLocos;
   sendFifoBuffer[sendWriteFifoCounter][CONSISTADDRHIGH] = consistAddress >> 8;
