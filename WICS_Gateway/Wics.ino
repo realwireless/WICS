@@ -1,6 +1,6 @@
 // ==============================================
-// WICS GATEWAY v1.01 addOn for nowRail v2.0.1
-// 2026-05-30 (c) Bo Holmqvist
+// WICS GATEWAY v1.1.0 addOn for nowRail v2.1.0
+// 2026-06-09 (c) Bo Holmqvist
 // ==============================================
 #include <Wire.h> // Sets in nowrail_user_setup.h
 #include <Adafruit_GFX.h>
@@ -329,7 +329,7 @@ void checkTimeEvents(byte clockHour, byte clockMinute, byte clockSecond, byte cl
           timeMatches(timeaccRules[i].second, timeaccRules[i].secondIsInterval, clockSecond) &&
           timeMatches(timeaccRules[i].day, timeaccRules[i].dayIsInterval, clockDay)) {
         
-        myLayout.sendAccessoryCommand(timeaccRules[i].dccAddr, timeaccRules[i].logicState, MESSRESPNOTREQ);
+        myLayout.sendAccessoryCommand(timeaccRules[i].dccAddr, timeaccRules[i].logicState, MESSRESPREQ);
         
         Serial.print("[TIMEACC TRIGGERED] DCC: ");
         Serial.print(timeaccRules[i].dccAddr);
@@ -942,7 +942,6 @@ bool loadConfig() {
   return true;
 }
 
-
 // ==============================================
 // Execute WiFi Channel update if rule exist
 // Is called fron nowRail from nowAccComRec
@@ -1185,7 +1184,11 @@ void initWics() {
 // ==============================================
 // ==============================================
 void runWics() {
-  handleButtons();
+   // Time-Out Control for failed Accessories
+   wics_checkAccTimeout(); 
+
+   // RX480E Buttons
+   handleButtons();
 
   // Update OLED System Monitor
   static unsigned long lastMonitorRefresh = 0;
@@ -1197,7 +1200,7 @@ void runWics() {
   }
     
     //Check Time Events once a second
-    checkTimeEvents(clockHour, clockMinutes, clockSeconds, clockDay);
+    //checkTimeEvents(clockHour, clockMinutes, clockSeconds, clockDay);
         
     // Handle WEB requests
       if (wifiStatus == "on") {

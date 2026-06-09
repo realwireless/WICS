@@ -1,15 +1,24 @@
-/*nowRail V2_0_1 & WICS V1.0.1 for WICS GATEWAY Board
-30/05/2026
-
-   This tab contains custom functions that are called when nowrail receives commands.
-   This allows users to write their own code driven by these events using the varibles passed.
-
-   If not required all these functions can be commented out of the tab or deleted.
-
-*/
 // ============================================================================
-// ### nowRail Custom Functions ### 
+//                 ### WICS using nowRail Custom Functions ### 
 // ============================================================================
+
+// ============================================================================
+// GLOBAL VARIABLES FOR ACC TIMEOUT AND STATUS TRACKING
+// ============================================================================
+int lastReqAccNum = -1;
+byte lastReqAccInst = 0;
+bool lastAccWasProcessed = true; 
+unsigned long lastReqTime = 0;
+const unsigned long ACC_TIMEOUT_MS = 2000; // 2 seconds timeout for response
+int channelChangeAccNum = -1;             // Tracks DCC address for channel changes
+int lastOledSenNum = -1;
+int32_t lastOledSenInst = -1;
+int lastOledLocoAddrFunc = -1;
+byte lastOledFuncNum = 255;
+byte lastOledFuncState = 255;
+int lastOledLocoAddrSpeed = -1;
+byte lastOledLocoSpeed = 255;
+byte lastOledLocoDir = 255;
 
 // ============================================================================
 // WICS Helper: always create EXACT 21 char string for System Monitor
@@ -28,79 +37,112 @@ void formatLine21(char *out, const char *fmt, ...) {
 // ============================================================================
 // ACCESSORY COMMAND RECEIVED
 // ============================================================================
-//myLayout.accProcessed(1);  //processed... required for panel update transmission
-//myLayout.accProcessed(0);  //wasn't processed by this board so no panel update
-// Serial.print("Accessory Command for AccNum:");
-// Serial.print(accNum);
-// Serial.print(" Dir:");
-// Serial.println(accInst);
-
 void nowAccComRec(int accNum, byte accInst) {
-  char mLine[22];
-  formatLine21(mLine, ">ACC %4d %d Requested", accNum, accInst);
-  oledMonitor(mLine);
-  // === Check if WICS GATEWAY.TXT have rule for channel change ===
+  char mLine[22]; // CORRECTED: Now a properly sized char array
+
+  // Check if previous timed out
+  if (!lastAccWasProcessed && lastReqAccNum != -1 && lastReqAccNum != accNum) {
+    formatLine21(mLine, "<ACC %4d %d Failed", lastReqAccNum, lastReqAccInst);
+    oledMonitor(mLine);
+  }
+
+  // Log new request
+  if (lastReqAccNum != accNum || lastReqAccInst != accInst || lastAccWasProcessed) {
+    lastReqAccNum = accNum;
+    lastReqAccInst = accInst;
+    lastAccWasProcessed = false; 
+    lastReqTime = millis(); 
+
+    formatLine21(mLine, ">ACC %4d %d Requested", accNum, accInst);
+    oledMonitor(mLine);
+  }
+
+  // Save the address in case this request triggers a channel change
+  channelChangeAccNum = accNum;
+
+  // Check channel change rule (this will eventually trigger nowChannelUpdate)
   wics_checkAndTriggerChannelChange(accNum, accInst);
+
+  myLayout.accProcessed(0); 
 }
 
 // ============================================================================
-// PANEL UPDATE & Check if there is any Channel Change Rule active
+// PANEL UPDATE
 // ============================================================================
-  // Serial.print("Panel Update for AccNum:");
-  // Serial.print(accNum);//The accessory number that has been processed
-  // Serial.print(" Dir:");
-  // Serial.println(accInst); //direction/instruction/direction completed
-
 void nowPanelUpdate(int accNum, byte accInst) {
-  char mLine[22];
+  if (accNum == lastReqAccNum && accInst == lastReqAccInst) {
+    lastAccWasProcessed = true; 
+  }
+
+  char mLine[22]; // CORRECTED: Now a properly sized char array
   formatLine21(mLine, "<ACC %4d %d Processed", accNum, accInst);
   oledMonitor(mLine);
+}
+
+// ============================================================================
+// WICS TIMEOUT CHECKER (Call this from your main loop)
+// ============================================================================
+void wics_checkAccTimeout() {
+  if (!lastAccWasProcessed && lastReqAccNum != -1) {
+    unsigned long currentMillis = millis();
+    
+    if (currentMillis - lastReqTime >= ACC_TIMEOUT_MS) {
+      lastAccWasProcessed = true; 
+      
+      Serial.print("[WICS TIMEOUT] No response for AccNum: ");
+      Serial.println(lastReqAccNum);
+      
+      char mLine[22]; // CORRECTED: Now a properly sized char array
+      formatLine21(mLine, "<ACC %4d %d Failed", lastReqAccNum, lastReqAccInst);
+      oledMonitor(mLine);
+    }
+  }
 }
 
 // ============================================================================
 // SENSOR UPDATE
 // ============================================================================
 void nowSensorUpdate(int senNum, int32_t senInst) {
-  char mLine[22];
-  formatLine21(mLine, "SENS %4d %ld Received", senNum, senInst);
-  oledMonitor(mLine);
+  // Only print if the sensor number or its state actually changed
+  if (senNum != lastOledSenNum || senInst != lastOledSenInst) {
+    lastOledSenNum = senNum;
+    lastOledSenInst = senInst;
+
+    char mLine[22];
+    formatLine21(mLine, "SENS %4d %ld Received", senNum, senInst);
+    oledMonitor(mLine);
+  }
 }
 
 // ============================================================================
 // LOCO FUNCTION UPDATE
 // ============================================================================
-//Example loco decoder at https://youtu.be/GXlXMaAw16E
-//receives loco function updates..for updating controllers
 void nowLocoFuncUpdate(int locoAddr, byte nowFuncNum, byte nowFuncState) {
-  char mLine[22];
-  formatLine21(mLine, "LOCO %4d F%02d=%d", locoAddr, nowFuncNum, nowFuncState);
-  oledMonitor(mLine);
+  // Only print if it is a new locomotive, a different function pin, or a state change
+  if (locoAddr != lastOledLocoAddrFunc || nowFuncNum != lastOledFuncNum || nowFuncState != lastOledFuncState) {
+    lastOledLocoAddrFunc = locoAddr;
+    lastOledFuncNum = nowFuncNum;
+    lastOledFuncState = nowFuncState;
+
+    char mLine[22];
+    formatLine21(mLine, "LOCO %4d F%02d=%d", locoAddr, nowFuncNum, nowFuncState);
+    oledMonitor(mLine);
+  }
 }
 
 // ============================================================================
 // LOCO SPEED UPDATE
 // ============================================================================
 void nowLocoSpeedUpdate(int locoAddr, byte locoSpeed, byte locoDir) {
-  char mLine[22];
-  formatLine21(mLine, "LOCO %4d S%3d D%d", locoAddr, locoSpeed, locoDir);
-  oledMonitor(mLine);
-}
+  // Only print if the locomotive address, speed value, or direction changed
+  if (locoAddr != lastOledLocoAddrSpeed || locoSpeed != lastOledLocoSpeed || locoDir != lastOledLocoDir) {
+    lastOledLocoAddrSpeed = locoAddr;
+    lastOledLocoSpeed = locoSpeed;
+    lastOledLocoDir = locoDir;
 
-// ============================================================================
-// nowTimeEvent 
-// ============================================================================
-//This function is called every layout second update (fast clock that can mean a lot of times per real world second )
-//This function can be used to update layout clock either on controllers or layout scenic displays/clocks
-//It can also be used to send commands at set times, this may control lights to come on/off at certain times in a building
-//Function can be deleted
-void nowTimeEvents(byte clockSpeed, byte clockHour, byte clockMinute, byte clockSecond, byte clockDay) {
-  static byte lastSecond = 255;
-  
-  if (clockSecond != lastSecond) {
-    lastSecond = clockSecond;
-    
-    // Check WICS Time Events
-    checkTimeEvents(clockHour, clockMinute, clockSecond, clockDay);
+    char mLine[22];
+    formatLine21(mLine, "LOCO %4d S%3d D%d", locoAddr, locoSpeed, locoDir);
+    oledMonitor(mLine);
   }
 }
 
@@ -117,20 +159,87 @@ void nowChannelUpdate(uint8_t channelNum, uint8_t channelState) {
 
   if (channelState < 1) {
     Serial.println("Change command sent to Masterclock");
-     currentWiFiChannel = channelNum; // This Board is MasterClock 
+    currentWiFiChannel = channelNum; 
   } else {
     Serial.println("This board changing to new wifi channel");
-    currentWiFiChannel = channelNum; // WICS System Monitor variable
+    currentWiFiChannel = channelNum; 
     
-    // Notify WICS WiFi (AP) to change channel
     if (wifiStatus == "on") {
-      wics_configureWiFi(channelNum, false); // false = don't restart the webbservern
+      wics_configureWiFi(channelNum, false); 
     }
+  }
+
+  // If a channel change was initiated by a DCC address, clear timeout and update OLED
+  if (channelChangeAccNum != -1) {
+    lastAccWasProcessed = true; // Stops the "Failed" timer instantly!
+    
+    char mLine[22]; // CORRECTED: Now a properly sized char array
+    formatLine21(mLine, "<ACC %4d %d Processed", channelChangeAccNum, lastReqAccInst);
+    oledMonitor(mLine);
+    
+    channelChangeAccNum = -1; // Reset tracking variable
+  }
+}
+// ============================================================================
+// Power Command to DCC-EX 
+// ============================================================================
+void nowPowerCommand(byte Command) {
+  Serial.print("nowPowerCommand: ");
+  Serial.println(Command);
+
+  char mLine[22];
+  bool validCommand = true;
+
+  // Map the nowRail power states to clean 21-character monitor strings
+  switch (Command) {
+    case 0: // TURNPOWEROFF
+      formatLine21(mLine, "PWR  Request OFF");
+      break;
+    case 1: // TURNPOWERON
+      formatLine21(mLine, "PWR  Request ON");
+      break;
+    case 2: // TURNEMERGENCYSTOP
+      formatLine21(mLine, "PWR  Request ESTOP");
+      break;
+    case 3: // DONEPOWEROFF
+      formatLine21(mLine, "PWR  Status OFF");
+      break;
+    case 4: // DONEPOWERON
+      formatLine21(mLine, "PWR  Status ON");
+      break;
+    case 5: // DONEEMERGENCYSTOP
+      formatLine21(mLine, "PWR  Status ESTOP!!");
+      break;
+    default:
+      validCommand = false;
+      break;
+  }
+
+  // Only push to the OLED if it was a recognized power command
+  if (validCommand) {
+    oledMonitor(mLine);
+  }
+}
+
+// ============================================================================
+// nowTimeEvent 
+// ============================================================================
+void nowTimeEvents(byte clockSpeed, byte clockHour, byte clockMinute, byte clockSecond, byte clockDay) {
+  static byte lastSecond = 255;
+  
+  if (clockSecond != lastSecond) {
+    lastSecond = clockSecond;
+    
+    // Check WICS Time Events
+    checkTimeEvents(clockHour, clockMinute, clockSecond, clockDay);
   }
 }
 
 
-
+// ============================================================================
+// ============================================================================
+// BELOW NOT USED BY WICS TODAY
+// ============================================================================
 // ============================================================================
 
 //Layout Clock----------------------------------------------------------------------------------------------------
@@ -139,21 +248,6 @@ void nowClockSpeedUpdate(){
   //update controller
   
   
-}
-
-//Layout Power Commands--------------------------------------------------------------
-//Receives power commands that would usually be sent to DCC-EX by a line like myLayout.sendPowerCommand(DONEEMERGENCYSTOP);
-//Function would be used by loco controllers to update power staus if needed.
-void nowPowerCommand(byte Command) {
-  Serial.print("nowPowerCommand: ");
-  Serial.println(Command);
-  //OPTIONS
-  // #define TURNPOWEROFF 0...Turn power off
-  // #define TURNPOWERON 1
-  // #define TURNEMERGENCYSTOP 2
-  // #define DONEPOWEROFF 3...power turned off
-  // #define DONEPOWERON 4.
-  // #define DONEEMERGENCYSTOP 5
 }
 
 //Loco controller data array--------------------------------------------------------------

@@ -1,4 +1,4 @@
-WICS Gateway Version 1.0.1 (2026-05-30) Bo Holmqvist
+WICS Gateway Version 1.1.0 (2026-06-09) Bo Holmqvist
 ----------------------------------------------------
 Board: ESP32C6 DEV Module
 1. Install the Board "esp32" by espressif Systems 
