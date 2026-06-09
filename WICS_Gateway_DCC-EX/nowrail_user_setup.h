@@ -1,5 +1,5 @@
-/*nowRailV2_0_1
-15/05/2026
+/*nowRailV2_1_0
+04/06/2026
 */
 
 #pragma once
@@ -7,8 +7,8 @@
 //WIFI added in Version 1.4.4
 
 // Version information
-#define NOWRAIL_VERSION "2.0.1"   // nowRail
-#define WICS_VERSION "1.0.1"      // WICS addOn
+#define NOWRAIL_VERSION "2.1.0"   // nowRail
+#define WICS_VERSION "1.1.0"      // WICS addOn
 
 //-----------------------------------------------------------------
 //All boards should be set to the same channel. Only use 1,6 and 11 for technical reasons
@@ -43,12 +43,11 @@
 //1.8.3 https://www.digitaltown.co.uk/nowRail.php#MASTERCLOCK covered in video https://www.youtube.com/watch?v=Eih6xguq3gM at time point 20:20
 #define REDUCEMASTERCLOCKDIAG //This reduces Masterclock messages to once per minute... reduced clutter when doing diagnostics
 
-
 //SERIAL Devices.........................................
 //nowRail use Serial2.... WARNING  some boards DO NOT have Serial 2
 //Tested on ESP32 Dev Module... check other boards have Serial2 before using
-#define SERIALRX2 01
-#define SERIALTX2 00
+#define SERIALRX2 01 // (Espressif ESP32-C6)
+#define SERIALTX2 00 // (Espressif ESP32-C6)
 
 //MP3 Player DY-SV5W, DY-HV8F, DY_HV20T, JQ8900............................
 //See https://youtu.be/91_2KRJqaWs
@@ -84,10 +83,13 @@
 #define DCCDECODERPIN 4 //If board is being used as a DCC decoder this is the interrupt pin
 #define ONEBITTIME 130  // If your DCC system does not work you can change this value. NCE systems and DCCEX seem to work between 130 - 180
 
-//I2C Devices...........................................................
-
 //All I2C devices need the Wire.h uncommented
 #include "Wire.h"
+//If you wish to set custom SDA and SDA pins as required on 
+//ESP32 C3 and S3 boards uncomment the lines below and set pin numbers
+//Commenting out will use the default pins as shown on the ESP32 Dev Module wiring diagrams 
+#define CUSTOM_SDA 11 //SDA cutom pin number  (Espressif ESP32-C6)
+#define CUSTOM_SCL 10 //SCL custom pin number (Espressif ESP32-C6)
 
 //EEPROM...........................................................
 //See https://www.digitaltown.co.uk/nowRail.php#EEPROM

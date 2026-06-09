@@ -1,5 +1,5 @@
 # =========================================================================================================================
-#                                       WICS GATEWAY CONFIGURATION FILE v1.01                     (2026-05-28 Bo Holmqvist)
+#                                       WICS GATEWAY CONFIGURATION FILE v1.1.0                    (2026-06-09 Bo Holmqvist)
 # =========================================================================================================================
 # [Type]: BUTTONS, A-BUTTON, B-BUTTON, C-BUTTON, D-BUTTON, CHANNEL 
 # [Type]: DELAYEDACC, TIMEACC, TIMEDACC 
@@ -147,12 +147,12 @@ D-BUTTON,6,107,1,1          # 6 Click On D-Button sends out DCC:107 Logic:1. Row
 D-BUTTON,7,107,0,1          # 7 Click On D-Button sends out DCC:107 Logic:0. Row is Active
 D-BUTTON,8,115,1,1          # 8 Click On D-Button sends out DCC:115 Logic:1. Row is Active
 
-TIMEACC,*,*/1,0,*,109,1,1   # Every minute (at second 0), all days send DCC-Address:109 Logic:1 Row is active!
-TIMEACC,*,*/1,30,*,109,0,1  # Every minute (at second 30), all days send DCC-Address:109 Logic:0 Row is active!
+TIMEACC,*,*/1,0,*,109,1,1   # Every minute (at second 0), all days send DCC-Address:109 Logic:1 Row is active
+TIMEACC,*,*/1,30,*,109,0,1  # Every minute (at second 30), all days send DCC-Address:109 Logic:0 Row is active
 
-TIMEDEX,*/1,0,0,*,<Z>,0     # Every hour (at minute 0, second 0), all days send <Z>. Row is inactive!
-TIMEDEX,6,0,0,*/2,<Q>,0     # At 06:00:00, every second day send <Q>. Row is inactive!
+TIMEDEX,*/1,0,0,*,<Z>,0     # Every hour (at minute 0, second 0), all days send <Z>. Row is inactive
+TIMEDEX,6,0,0,*/2,<Q>,0     # At 06:00:00, every second day send <Q>. Row is inactive
 
-CHANNEL,801,1,1,1           # DCC-Address:8001,logic 1 sets the WIFI channel to 1. Row is active
-CHANNEL,806,1,6,1           # DCC-Address:8006,logic 1 sets the WIFI channel to 6. Row is active
-CHANNEL,811,1,11,1          # DCC-Address:8011,logic 1 sets the WIFI channel to 1. Row is active
+CHANNEL,801,1,1,1           # DCC-Address:801,logic 1 sets the WIFI channel to 1. Row is active
+CHANNEL,806,1,6,1           # DCC-Address:806,logic 1 sets the WIFI channel to 6. Row is active
+CHANNEL,811,1,11,1          # DCC-Address:811,logic 1 sets the WIFI channel to 1. Row is active
