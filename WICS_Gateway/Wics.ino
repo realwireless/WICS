@@ -1039,7 +1039,6 @@ void registerActivity() {
 }
 
 // Print to OLED Display 
-// Print to OLED Display 
 void oledMonitor(const char* mLine) {
   if (strlen(mLine) > 0) {
     pushMonitorLine(mLine);
@@ -1097,7 +1096,6 @@ void oledMonitor(const char* mLine) {
   display.display();
 }
 
-
 // ==============================================
 // ==============================================
 //     ### WICS INIT (Setup) ###
@@ -1108,6 +1106,13 @@ void initWics() {
   uint32_t usbTime = millis();
   while (!Serial && (millis() - usbTime < 2000)) { delay(10); };
   
+  // Print version numbers to Serial
+  Serial.println(F("\n======================================="));
+  Serial.println( " ### WICS Init Start ###");
+  Serial.printf( "  nowRail Core Version:  %s\n", NOWRAIL_VERSION);
+  Serial.printf( "  WICS addOn Version:    %s\n", WICS_VERSION);
+  Serial.println(F("\n======================================="));
+
   clockSpeed = 1;
   myLayout.sendClockSpeedChange(clockSpeed);  
   pinMode(RGB_LED_PIN, OUTPUT);
@@ -1164,14 +1169,13 @@ void initWics() {
     }
   }
 
-  
-  // Set PIN for Buttons A-D
+   // Set PIN for Buttons A-D
   pinMode(buttonA, INPUT_PULLUP);
   pinMode(buttonB, INPUT_PULLUP);
   pinMode(buttonC, INPUT_PULLUP);
   pinMode(buttonD, INPUT_PULLUP);
 
-  // Success
+  // WICS Success
   printSmart("CONFIG OK", 1, 7, false);
   blinkRGB(2, 0, 255, 0);
   startupTimer = millis();
