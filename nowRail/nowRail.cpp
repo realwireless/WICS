@@ -1,5 +1,5 @@
-/*nowRailV2_1_0
-04/06/2026
+/*nowRailV2_1_1
+10/06/2026
 */
 #include "Arduino.h"
 #include "nowRail.h"
@@ -1778,7 +1778,7 @@ void nowRail::checkRecFifo(void) {
             //void addDelayedAccTrigger(int triggerAccNum,byte triggerAccDir,int delayedAccNum,byte delayedAccDir,int delayTime);
 
             //The first part is to see if an accessory command coming through should trigger some timed events
-            //Work thorugh the array, check for matching triggerAccNum and TriggerAccDir
+            //Work through the array, check for matching triggerAccNum and TriggerAccDir
             //This then sets their start time for triggering later
             for (q = 0; q < _DelayAccsCount; q++) {
               //work through all the triggers
@@ -1797,8 +1797,9 @@ void nowRail::checkRecFifo(void) {
 
               if (recFifoBuffer[recReadFifoCounter][MESSRESPONSE] == MESSRESPREQ) {
                 sendMessResp();
-                nowRail::sendPanelUpdate(accNum, accInst);
+                //nowRail::sendPanelUpdate(accNum, accInst);
               }
+              nowRail::sendPanelUpdate(accNum, accInst);
             }
             //  }
 
@@ -1865,7 +1866,53 @@ void nowRail::checkRecFifo(void) {
               nowRail::update74HC595N();
             }
 #endif
+//2_1_1 mod..updates states on double press Std pins, cd4021 pins gtp11
+#if defined(DOUBLEPRESSAUPDATE_ON)
+  //std pins
+  for(q=0;q<_stdPinButtonsCount;q++){
+    //  Serial.print("original _stdPinButtons[q][4]: ");
+    //  Serial.println(_stdPinButtons[q][4]);
+    if(_stdPinButtons[q][2] == accNum){  //if it's the correct accessory
+      if(accInst > 0){
+         _stdPinButtons[q][4] = 3; //update the button state ready for next press
+      }else{
+         _stdPinButtons[q][4] = 2;
+      }
+      //  Serial.print("_stdPinButtons[q][4]: ");
+      //  Serial.println(_stdPinButtons[q][4]);
+    }
+  }
+  //4021 pins
+  for(q=0;q<_CD4021PinCount;q++){
+      // Serial.print("original _CD4021PinButtons[q][5]: ");
+      // Serial.println(_CD4021PinButtons[q][5]);
+    if(_CD4021PinButtons[q][2] == accNum){  //if it's the correct accessory
+      if(accInst > 0){
+         _CD4021PinButtons[q][5] = 4; //update the button state ready for next press
+      }else{
+         _CD4021PinButtons[q][5] = 3;
+      }
+        // Serial.print("_CD4021PinButtons[q][5]: ");
+        // Serial.println(_CD4021PinButtons[q][5]);
+    }
+  }
 
+ #if defined(GT911) //gt911 updates
+  for(q=0;q<_GT911ButtonCount;q++){
+    // Serial.print("original _GT911Buttons[q][5]: ");
+    // Serial.println(_GT911Buttons[q][5]);
+    if(_GT911Buttons[q][2] == accNum){  //if it's the correct accessory
+      if(accInst > 0){
+         _GT911Buttons[q][5] = 4; //update the button state ready for next press
+      }else{
+         _GT911Buttons[q][5] = 3;
+      }
+      // Serial.print("_GT911Buttons[q][5]: ");
+      // Serial.println(_GT911Buttons[q][5]);
+    }
+  }
+ #endif           
+#endif
 
             break;
           case DCCLOCOSPEED:

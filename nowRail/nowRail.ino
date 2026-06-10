@@ -1,5 +1,14 @@
-/*nowRailV2_1_0
-04/06/2026
+/*nowRailV2_1_1
+10/06/2026
+
+ 2_1_1 modifications to panel reponse to update buttons that press once for 0 press agin for 1
+ These buttons now change state if a different source changes the accessory.
+ Apllies to stdPinButtons, CD4021pinButtons and GT911 touch screen buttons.
+
+2_1_1 bug fix nowRail.cpp
+nowRail::sendPanelUpdate(accNum, accInst); moved from inside
+if (recFifoBuffer[recReadFifoCounter][MESSRESPONSE] == MESSRESPREQ) { line 1800
+Panel update should send whatever the state of MESSRESPREQ 
 
 Additions
 2_1_0 ability to set custom SDA/SCL pins using
@@ -14,28 +23,6 @@ Adds delayed functions. This allows a function/s to be triggered after a period 
 
 //bug fix 
 PCA9685 leds...flashing flickering at start up when not commanded...fixed
-
-MIT License
-Copyright (c) 2026 Simon Coward
-Copyright (c) 2026 Digital Town
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
     
 */
 //This line sets up the system
