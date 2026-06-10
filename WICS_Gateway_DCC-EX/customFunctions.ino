@@ -38,7 +38,7 @@ void formatLine21(char *out, const char *fmt, ...) {
 // ACCESSORY COMMAND RECEIVED
 // ============================================================================
 void nowAccComRec(int accNum, byte accInst) {
-  char mLine[22]; // CORRECTED: Now a properly sized char array
+  char mLine[22]; 
 
   // Check if previous timed out
   if (!lastAccWasProcessed && lastReqAccNum != -1 && lastReqAccNum != accNum) {
@@ -74,13 +74,13 @@ void nowPanelUpdate(int accNum, byte accInst) {
     lastAccWasProcessed = true; 
   }
 
-  char mLine[22]; // CORRECTED: Now a properly sized char array
+  char mLine[22]; 
   formatLine21(mLine, "<ACC %4d %d Processed", accNum, accInst);
   oledMonitor(mLine);
 }
 
 // ============================================================================
-// WICS TIMEOUT CHECKER (Call this from your main loop)
+// WICS TIMEOUT CHECKER (Called from WICS main loop)
 // ============================================================================
 void wics_checkAccTimeout() {
   if (!lastAccWasProcessed && lastReqAccNum != -1) {
@@ -92,7 +92,7 @@ void wics_checkAccTimeout() {
       Serial.print("[WICS TIMEOUT] No response for AccNum: ");
       Serial.println(lastReqAccNum);
       
-      char mLine[22]; // CORRECTED: Now a properly sized char array
+      char mLine[22]; 
       formatLine21(mLine, "<ACC %4d %d Failed", lastReqAccNum, lastReqAccInst);
       oledMonitor(mLine);
     }
@@ -173,7 +173,7 @@ void nowChannelUpdate(uint8_t channelNum, uint8_t channelState) {
   if (channelChangeAccNum != -1) {
     lastAccWasProcessed = true; // Stops the "Failed" timer instantly!
     
-    char mLine[22]; // CORRECTED: Now a properly sized char array
+    char mLine[22]; 
     formatLine21(mLine, "<ACC %4d %d Processed", channelChangeAccNum, lastReqAccInst);
     oledMonitor(mLine);
     
