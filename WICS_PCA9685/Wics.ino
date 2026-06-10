@@ -593,6 +593,7 @@ void initWics() {
   uint32_t usbTime = millis();
   while (!Serial && (millis() - usbTime < 2000)) { delay(10); };
   
+  // Print version numbers to Serial
   Serial.println(F("\n======================================="));
   Serial.println( " ### WICS Init Start ###");
   Serial.printf( "  nowRail Core Version:  %s\n", NOWRAIL_VERSION);

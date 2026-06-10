@@ -1,5 +1,14 @@
-/*nowRailV2_1_0
-04/06/2026
+/*nowRailV2_1_1
+10/06/2026
+
+ 2_1_1 modifications to panel reponse to update buttons that press once for 0 press agin for 1
+ These buttons now change state if a different source changes the accessory.
+ Apllies to stdPinButtons, CD4021pinButtons and GT911 touch screen buttons.
+
+2_1_1 bug fix nowRail.cpp
+nowRail::sendPanelUpdate(accNum, accInst); moved from inside
+if (recFifoBuffer[recReadFifoCounter][MESSRESPONSE] == MESSRESPREQ) { line 1800
+Panel update should send whatever the state of MESSRESPREQ 
 
 Additions
 2_1_0 ability to set custom SDA/SCL pins using

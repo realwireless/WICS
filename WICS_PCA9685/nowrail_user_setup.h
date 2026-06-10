@@ -1,5 +1,5 @@
-/*nowRailV2_1_0
-04/06/2026
+/*nowRailV2_1_1
+10/06/2026
 */
 
 #pragma once
@@ -7,7 +7,7 @@
 //WIFI added in Version 1.4.4
 
 // Version information
-#define NOWRAIL_VERSION "2.1.0"   // nowRail
+#define NOWRAIL_VERSION "2.1.1"   // nowRail
 #define WICS_VERSION "1.1.0"      // WICS addOn
 
 //-----------------------------------------------------------------
